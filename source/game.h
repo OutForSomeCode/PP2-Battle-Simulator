@@ -77,8 +77,6 @@ namespace PP2 {
         void UpdateParticleBeams();
 
         void UpdateExplosions();
-
-        ~Game();
     };
 
 }; // namespace PP2

@@ -137,17 +137,14 @@ Tank &Game::FindClosestEnemy(Tank &current_tank) {
 // Targeting etc..
 // -----------------------------------------------------------
 void Game::Update(float deltaTime) {
-#ifdef USING_EASY_PROFILER
-    EASY_FUNCTION(profiler::colors::Yellow);
-#endif
-    // Update tanks
+    //Update tanks
     UpdateTanks();
-
-    //Update rockets
-    UpdateRockets();
 
     //Update smoke plumes
     UpdateSmoke();
+
+    //Update rockets
+    UpdateRockets();
 
     //Remove exploded rockets with remove erase idiom
     rockets.erase(std::remove_if(rockets.begin(), rockets.end(), [](const Rocket &rocket) { return !rocket.active; }),
@@ -161,81 +158,53 @@ void Game::Update(float deltaTime) {
 
     //Remove when done with remove erase idiom
     explosions.erase(std::remove_if(explosions.begin(), explosions.end(),
+                                    [](const Explosion &explosion) { return explosion.done(); }), explosions.end());
+}
+
+void Game::UpdateTanks() {
+    for (Tank &tank : tanks) {
+        if (tank.active) {
+            //Check tank collision and nudge tanks away from each other
+            for (Tank &oTank : tanks) {
+                if (&tank == &oTank) continue;
+
+                vec2 dir = tank.Get_Position() - oTank.Get_Position();
+
+    //Update smoke plumes
+    UpdateSmoke();
+
+                if (dir.sqrLength() < colSquaredLen) {
+                    tank.Push(dir.normalized(), 1.f);
+                }
+            }
+
+    //Update particle beams
+    UpdateParticleBeams();
+
+    //Update explosion sprites
+    UpdateExplosions();
+
+    //Remove when done with remove erase idiom
+    explosions.erase(std::remove_if(explosions.begin(), explosions.end(),
                                     [](const Explosion &explosion) { return explosion.done(); }),
                      explosions.end());
 }
 
-void Game::UpdateTanks() {
-#ifdef USING_EASY_PROFILER
-    EASY_FUNCTION(profiler::colors::Yellow);
-#endif
-    tbb::parallel_for(tbb::blocked_range<int>(1, tanks.size()),
-                      [&](tbb::blocked_range<int> r) {
-#if PROFILE_PARALLEL == 1
-                          EASY_BLOCK("Update Tank", profiler::colors::Gold);
-#endif
-                          for (int i = r.begin(); i < r.end(); ++i) {
-
-                              Tank &tank = tanks[i];
-                              if (tank.active) {
-
-                                  //Check tank collision and nudge tanks away from each other
-                                  //for (Tank &oTank : tanks) {
-                                  auto ts = Grid::Instance()->GetTanksAtPos(tank.gridCell);
-                                  for (auto oTank : ts) {
-                                      if (&tank != oTank) {
-                                          vec2<> dir = tank.Get_Position() - oTank->Get_Position();
-
-                                          float colSquaredLen =
-                                                  (tank.Get_collision_radius() * tank.Get_collision_radius()) +
-                                                  (oTank->Get_collision_radius() * oTank->Get_collision_radius());
-
-                                          if (dir.sqrLength() < colSquaredLen) {
-                                              tank.Push(dir.normalized(), 1.f);
-                                          }
-                                      }
-                                  }
-
-                                  //Move tanks according to speed and nudges (see above) also reload
-                                  tank.Tick();
-
-                                  //Shoot at closest target if reloaded
-                                  if (tank.Rocket_Reloaded()) {
-                                      Tank &target = FindClosestEnemy(tank);
-                                      scoped_lock lock(mtx);
-                                      rockets.push_back(
-                                              Rocket(tank.position,
-                                                     (target.Get_Position() - tank.position).normalized() * 3,
-                                                     rocket_radius,
-                                                     tank.allignment,
-                                                     ((tank.allignment == RED) ? &rocket_red : &rocket_blue)));
-
-                                      tank.Reload_Rocket();
-                                  }
-                              }
-                          }
-                      });
+                tank.Reload_Rocket();
+            }
+        }
+    }
 }
 
 void Game::UpdateSmoke() {
-#ifdef USING_EASY_PROFILER
-    EASY_FUNCTION(profiler::colors::Yellow);
-#endif
     for (Smoke &smoke : smokes) {
         smoke.Tick();
     }
 }
 
 void Game::UpdateRockets() {
-#ifdef USING_EASY_PROFILER
-    EASY_FUNCTION(profiler::colors::Yellow);
-#endif
-    tbb::parallel_for(tbb::blocked_range<int>(1, rockets.size()),
-                      [&](tbb::blocked_range<int> r) {
-#if PROFILE_PARALLEL == 1
-                          EASY_BLOCK("Update Rocket", profiler::colors::Gold);
-#endif
-                          for (int i = r.begin(); i < r.end(); ++i) {
+    for (Rocket &rocket : rockets) {
+        rocket.Tick();
 
                               Rocket &rocket = rockets[i];
                               rocket.Tick();
@@ -247,61 +216,30 @@ void Game::UpdateRockets() {
                                   return;
                               }
 
-                              //Check if rocket collides with enemy tank, spawn explosion and if tank is destroyed spawn a smoke plume
-                              auto ts = Grid::Instance()->GetTanksAtPos(Grid::GetGridCell(rocket.position));
-                              for (auto tank : ts) {
-                                  if (tank->active && (tank->allignment != rocket.allignment) &&
-                                      rocket.Intersects(tank->position, tank->collision_radius)) {
-                                      scoped_lock lock(mtx);
-                                      explosions.push_back(Explosion(&explosion, tank->position));
-
-                                      if (tank->hit(ROCKET_HIT_VALUE)) {
-                                          smokes.push_back(Smoke(smoke, tank->position - vec2<>(0, 48)));
-                                      }
-
-                                      rocket.active = false;
-                                      break;
-                                  }
-                              }
-                          }
-                      });
-#ifdef USING_EASY_PROFILER
-    //MICROPROFILE_COUNTER_SET("Game/rockets/", rockets.size());
-#endif
+                rocket.active = false;
+                break;
+            }
+        }
+    }
 }
 
 void Game::UpdateParticleBeams() {
-#ifdef USING_EASY_PROFILER
-    EASY_FUNCTION(profiler::colors::Yellow);
-#endif
-    tbb::parallel_for(tbb::blocked_range<int>(1, particle_beams.size()),
-                      [&](tbb::blocked_range<int> r) {
-#if PROFILE_PARALLEL == 1
-                          EASY_BLOCK("Update ParticleBeams", profiler::colors::Red);
-#endif
-                          for (int i = r.begin(); i < r.end(); ++i) {
+    for (Particle_beam &particle_beam : particle_beams) {
+        particle_beam.tick(tanks);
 
-                              Particle_beam &particle_beam = particle_beams[i];
-                              particle_beam.tick(tanks);
-
-                              //Damage all tanks within the damage window of the beam (the window is an axis-aligned bounding box)
-                              for (Tank &tank : tanks) {
-                                  if (tank.active &&
-                                      particle_beam.rectangle.intersectsCircle(tank.Get_Position(),
-                                                                               tank.Get_collision_radius())) {
-                                      if (tank.hit(particle_beam.damage)) {
-                                          smokes.push_back(Smoke(smoke, tank.position - vec2<>(0, 48)));
-                                      }
-                                  }
-                              }
-                          }
-                      });
+        //Damage all tanks within the damage window of the beam (the window is an axis-aligned bounding box)
+        for (Tank &tank : tanks) {
+            if (tank.active &&
+                particle_beam.rectangle.intersectsCircle(tank.Get_Position(), tank.Get_collision_radius())) {
+                if (tank.hit(particle_beam.damage)) {
+                    smokes.push_back(Smoke(smoke, tank.position - vec2(0, 48)));
+                }
+            }
+        }
+    }
 }
 
 void Game::UpdateExplosions() {
-#ifdef USING_EASY_PROFILER
-    EASY_FUNCTION(profiler::colors::Yellow);
-#endif
     for (Explosion &explosion : explosions) {
         explosion.Tick();
     }
