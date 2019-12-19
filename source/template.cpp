@@ -17,6 +17,7 @@
 #include "surface.h"
 #include <SDL2/SDL.h>
 #include <iostream>
+#include <stdint.h>
 
 #ifdef USING_EASY_PROFILER
 #include <easy/profiler.h>
