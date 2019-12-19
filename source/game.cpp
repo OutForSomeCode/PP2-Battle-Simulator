@@ -12,9 +12,11 @@ using namespace std;
 
 using namespace PP2;
 
+#include "prerequisites.h"
+#include "ThreadPool.h"
+
 #include "Grid.h"
-#include "explosion.h"
-#include "particle_beam.h"
+#include "tank.h"
 #include "rocket.h"
 #include "smoke.h"
 #include "tank.h"
@@ -64,6 +66,8 @@ void Game::Init() {
 
     frame_count_font = new Font("assets/digital_small.png", "ABCDEFGHIJKLMNOPQRSTUVWXYZ:?!=-0123456789.");
 
+    grid = new Grid();
+
     tanks.reserve(NUM_TANKS_BLUE + NUM_TANKS_RED);
 
     uint rows = (uint) sqrt(NUM_TANKS_BLUE + NUM_TANKS_RED);
@@ -96,17 +100,17 @@ void Game::Init() {
     particle_beams.push_back(
             Particle_beam(vec2<>(1200, 600), vec2<>(100, 50), &particle_beam_sprite, PARTICLE_BEAM_HIT_VALUE));
 
-    for (auto &tank : tanks)
-        g->AddTankToGridCell(&tank);
+
+    for (auto &tank : tanks){
+        grid->AddTankToGridCell(&tank);
+    }
 }
 
 // -----------------------------------------------------------
 // Close down application
 // -----------------------------------------------------------
 void Game::Shutdown() {
-}
-
-Game::~Game() {
+    delete grid;
     delete frame_count_font;
 }
 
@@ -168,7 +172,7 @@ void Game::UpdateTanks() {
             for (Tank &oTank : tanks) {
                 if (&tank == &oTank) continue;
 
-                vec2 dir = tank.Get_Position() - oTank.Get_Position();
+                vec2<> dir = tank.Get_Position() - oTank.Get_Position();
 
     //Update smoke plumes
     UpdateSmoke();
@@ -196,6 +200,7 @@ void Game::UpdateTanks() {
     }
 }
 
+
 void Game::UpdateSmoke() {
     for (Smoke &smoke : smokes) {
         smoke.Tick();
@@ -209,12 +214,9 @@ void Game::UpdateRockets() {
                               Rocket &rocket = rockets[i];
                               rocket.Tick();
 
-                              if (rocket.position.x < -100 || rocket.position.y < -100 ||
-                                  rocket.position.x > SCRHEIGHT * 2 + 100 ||
-                                  rocket.position.y > SCRWIDTH * 2 + 100) {
-                                  rocket.active = false;
-                                  return;
-                              }
+                if (tank.hit(ROCKET_HIT_VALUE)) {
+                    smokes.push_back(Smoke(smoke, tank.position - vec2<>(0, 48)));
+                }
 
                 rocket.active = false;
                 break;
@@ -232,7 +234,7 @@ void Game::UpdateParticleBeams() {
             if (tank.active &&
                 particle_beam.rectangle.intersectsCircle(tank.Get_Position(), tank.Get_collision_radius())) {
                 if (tank.hit(particle_beam.damage)) {
-                    smokes.push_back(Smoke(smoke, tank.position - vec2(0, 48)));
+                    smokes.push_back(Smoke(smoke, tank.position - vec2<>(0, 48)));
                 }
             }
         }
@@ -266,13 +268,12 @@ void Game::Draw() {
                           for (int i = r.begin(); i < r.end(); ++i) {
                               tanks.at(i).Draw(screen);
 
-                              vec2<> tPos = tanks.at(i).Get_Position();
-                              // tread marks
-                              if ((tPos.x >= 0) && (tPos.x < SCRWIDTH) && (tPos.y >= 0) && (tPos.y < SCRHEIGHT))
-                                  background.GetBuffer()[(int) tPos.x + (int) tPos.y * SCRWIDTH] = SubBlend(
-                                          background.GetBuffer()[(int) tPos.x + (int) tPos.y * SCRWIDTH], 0x808080);
-                          }
-                      });
+        vec2<> tPos = tanks.at(i).Get_Position();
+        // tread marks
+        if ((tPos.x >= 0) && (tPos.x < SCRWIDTH) && (tPos.y >= 0) && (tPos.y < SCRHEIGHT))
+            background.GetBuffer()[(int) tPos.x + (int) tPos.y * SCRWIDTH] = SubBlend(
+                    background.GetBuffer()[(int) tPos.x + (int) tPos.y * SCRWIDTH], 0x808080);
+    }
 
     tbb::parallel_for(tbb::blocked_range<int>(1, rockets.size()),
                       [&](tbb::blocked_range<int> r) {

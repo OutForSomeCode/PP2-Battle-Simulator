@@ -15,7 +15,7 @@ set(SOURCE_FILES
         surface.{h,cpp}
         tank.{h,cpp}
         template.{h,cpp}
-        defines.h
+        prerequisites.h
         Grid.{h,cpp})
 
 include(SourceFileUtils)
