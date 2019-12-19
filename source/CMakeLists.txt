@@ -18,6 +18,14 @@ set(SOURCE_FILES
         defines.h
         Grid.{h,cpp})
 
+if (ENABLE_MICROPROFILE)
+    list(APPEND SOURCE_FILES
+            microprofile.config.h
+            ${microprofile_SOURCE_DIR}/microprofile_html.h
+            ${microprofile_SOURCE_DIR}/microprofile.{h,cpp}
+            )
+endif (ENABLE_MICROPROFILE)
+
 include(SourceFileUtils)
 
 # Expand file extensions (i.e. path/to/file.{h,cpp} becomes path/to/file.h;path/to/file.cpp)
@@ -43,7 +51,6 @@ endif ()
 
 
 if (MSVC)
-    target_link_libraries(${PROJECT_NAME} PRIVATE "ws2_32.lib")
     # set startup project for Visual Studio Builds
     set_property(
             DIRECTORY ${PROJECT_SOURCE_DIR}
@@ -54,13 +61,13 @@ if (MSVC)
     set_target_properties(
             ${PROJECT_NAME}
             PROPERTIES
-            VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/source/$(Configuration)"
+            VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/$(Configuration)"
     )
 endif ()
 
-if (ENABLE_EASY_PROFILER)
-    target_compile_definitions(${PROJECT_NAME} PUBLIC USING_EASY_PROFILER)
-    target_link_libraries(${PROJECT_NAME} PRIVATE CONAN_PKG::easy_profiler)
+if (ENABLE_MICROPROFILE)
+    target_include_directories(${PROJECT_NAME} PUBLIC ${microprofile_SOURCE_DIR})
+    target_compile_definitions(${PROJECT_NAME} PUBLIC USE_MICROPROFILE MICROPROFILE_USE_CONFIG)
 endif ()
 
 add_custom_target(

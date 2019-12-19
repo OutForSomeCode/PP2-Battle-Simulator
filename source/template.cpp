@@ -19,8 +19,8 @@
 #include <iostream>
 #include <stdint.h>
 
-#ifdef USING_EASY_PROFILER
-#include <easy/profiler.h>
+#ifdef USE_MICROPROFILE
+#include "microprofile.h"
 #endif
 
 namespace PP2
@@ -249,11 +249,6 @@ void swap()
 
 int main(int argc, char** argv)
 {
-#ifdef USING_EASY_PROFILER
-    printf("profiler started.\n");
-    EASY_PROFILER_ENABLE;
-    profiler::startListen();
-#endif
 #ifdef _MSC_VER
     redirectIO();
 #endif
@@ -291,9 +286,6 @@ int main(int argc, char** argv)
         swap();
         surface->SetBuffer((Pixel*)framedata);
 #else
-#ifdef USING_EASY_PROFILER
-        EASY_FUNCTION(profiler::colors::Orange);
-#endif
         void* target = 0;
         int pitch;
         SDL_LockTexture(frameBuffer, NULL, &target, &pitch);
@@ -356,6 +348,9 @@ int main(int argc, char** argv)
                 break;
             }
         }
+#ifdef USE_MICROPROFILE
+        MicroProfileFlip(nullptr);
+#endif
     }
 #ifdef USING_EASY_PROFILER
     profiler::dumpBlocksToFile("test_profile.prof");
