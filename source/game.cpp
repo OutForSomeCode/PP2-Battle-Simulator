@@ -4,13 +4,13 @@ using namespace std;
 #include "template.h"
 #include <cstdio>
 #include <iostream>
+#include <mutex>
 #include <string>
+#include <tbb/flow_graph.h>
 #include <tbb/parallel_for.h>
 #include <tbb/parallel_sort.h>
 
 using namespace PP2;
-
-#include "ThreadPool.h"
 
 #include "Grid.h"
 #include "explosion.h"
@@ -22,9 +22,8 @@ using namespace PP2;
 #include "game.h"
 
 #ifdef USING_EASY_PROFILER
-
 #include <easy/profiler.h>
-
+#define PROFILE_PARALLEL 1
 #endif
 
 static timer perf_timer;
@@ -141,14 +140,14 @@ void Game::Update(float deltaTime) {
 #ifdef USING_EASY_PROFILER
     EASY_FUNCTION(profiler::colors::Yellow);
 #endif
-    //Update tanks
+    // Update tanks
     UpdateTanks();
-
-    //Update smoke plumes
-    UpdateSmoke();
 
     //Update rockets
     UpdateRockets();
+
+    //Update smoke plumes
+    UpdateSmoke();
 
     //Remove exploded rockets with remove erase idiom
     rockets.erase(std::remove_if(rockets.begin(), rockets.end(), [](const Rocket &rocket) { return !rocket.active; }),
@@ -172,10 +171,11 @@ void Game::UpdateTanks() {
 #endif
     tbb::parallel_for(tbb::blocked_range<int>(1, tanks.size()),
                       [&](tbb::blocked_range<int> r) {
-                          for (int i = r.begin(); i < r.end(); ++i) {
-#ifdef USING_EASY_PROFILER
-                              EASY_FUNCTION(profiler::colors::Yellow);
+#if PROFILE_PARALLEL == 1
+                          EASY_BLOCK("Update Tank", profiler::colors::Gold);
 #endif
+                          for (int i = r.begin(); i < r.end(); ++i) {
+
                               Tank &tank = tanks[i];
                               if (tank.active) {
 
@@ -232,10 +232,11 @@ void Game::UpdateRockets() {
 #endif
     tbb::parallel_for(tbb::blocked_range<int>(1, rockets.size()),
                       [&](tbb::blocked_range<int> r) {
-                          for (int i = r.begin(); i < r.end(); ++i) {
-#ifdef USING_EASY_PROFILER
-                              EASY_FUNCTION(profiler::colors::Yellow);
+#if PROFILE_PARALLEL == 1
+                          EASY_BLOCK("Update Rocket", profiler::colors::Gold);
 #endif
+                          for (int i = r.begin(); i < r.end(); ++i) {
+
                               Rocket &rocket = rockets[i];
                               rocket.Tick();
 
@@ -275,7 +276,11 @@ void Game::UpdateParticleBeams() {
 #endif
     tbb::parallel_for(tbb::blocked_range<int>(1, particle_beams.size()),
                       [&](tbb::blocked_range<int> r) {
+#if PROFILE_PARALLEL == 1
+                          EASY_BLOCK("Update ParticleBeams", profiler::colors::Red);
+#endif
                           for (int i = r.begin(); i < r.end(); ++i) {
+
                               Particle_beam &particle_beam = particle_beams[i];
                               particle_beam.tick(tanks);
 
@@ -317,6 +322,9 @@ void Game::Draw() {
     //tbb::parallel_for(size_t(0), size_t(NUM_TANKS_BLUE + NUM_TANKS_RED), [&](size_t i) {
     tbb::parallel_for(tbb::blocked_range<int>(1, NUM_TANKS_BLUE + NUM_TANKS_RED),
                       [&](tbb::blocked_range<int> r) {
+#if PROFILE_PARALLEL == 1
+                          EASY_BLOCK("Draw tanks", profiler::colors::Red);
+#endif
                           for (int i = r.begin(); i < r.end(); ++i) {
                               tanks.at(i).Draw(screen);
 
@@ -330,6 +338,9 @@ void Game::Draw() {
 
     tbb::parallel_for(tbb::blocked_range<int>(1, rockets.size()),
                       [&](tbb::blocked_range<int> r) {
+#if PROFILE_PARALLEL == 1
+                          EASY_BLOCK("Draw rockets", profiler::colors::Red);
+#endif
                           for (int i = r.begin(); i < r.end(); ++i) {
                               rockets[i].Draw(screen);
                           }
@@ -338,6 +349,9 @@ void Game::Draw() {
     //for (Smoke& smoke : smokes)
     tbb::parallel_for(tbb::blocked_range<int>(1, smokes.size()),
                       [&](tbb::blocked_range<int> r) {
+#if PROFILE_PARALLEL == 1
+                          EASY_BLOCK("Draw smokes", profiler::colors::Black);
+#endif
                           for (int i = r.begin(); i < r.end(); ++i) {
                               smokes[i].Draw(screen);
                           }
@@ -346,6 +360,9 @@ void Game::Draw() {
     //for (Particle_beam& particle_beam : particle_beams)
     tbb::parallel_for(tbb::blocked_range<int>(1, particle_beams.size()),
                       [&](tbb::blocked_range<int> r) {
+#if PROFILE_PARALLEL == 1
+                          EASY_BLOCK("Draw particle_beams", profiler::colors::Pink);
+#endif
                           for (int i = r.begin(); i < r.end(); ++i) {
                               particle_beams[i].Draw(screen);
                           }
@@ -354,13 +371,17 @@ void Game::Draw() {
     //for (Explosion& explosion : explosions)
     tbb::parallel_for(tbb::blocked_range<int>(1, explosions.size()),
                       [&](tbb::blocked_range<int> r) {
+#if PROFILE_PARALLEL == 1
+                          EASY_BLOCK("Draw explosions", profiler::colors::Orange);
+#endif
                           for (int i = r.begin(); i < r.end(); ++i) {
                               explosions[i].Draw(screen);
                           }
                       });
 
     //Draw sorted health bars
-    for (int t = 0; t < 2; t++) {
+    //for (int t = 0; t < 2; t++)    {
+    tbb::parallel_for(size_t(0), size_t(2), [&](size_t t) {
         const UINT16 NUM_TANKS = ((t < 1) ? NUM_TANKS_BLUE : NUM_TANKS_RED);
 
         const UINT16 begin = ((t < 1) ? 0 : NUM_TANKS_BLUE);
@@ -389,7 +410,7 @@ void Game::Draw() {
                                                                                                        (double) TANK_MAX_HEALTH))),
                         health_bar_end_x, health_bar_end_y, GREENMASK);
         }
-    }
+    });
 }
 
 // -----------------------------------------------------------
