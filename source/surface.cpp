@@ -68,8 +68,14 @@ namespace PP2 {
     }
 
     void Surface::Clear(Pixel a_Color) {
-        int s = m_Width * m_Height;
-        for (int i = 0; i < s; i++) m_Buffer[i] = a_Color;
+//        int s = m_Width * m_Height;
+//        for (int i = 0; i < s; i++) m_Buffer[i] = a_Color;
+        try {
+            memset(m_Buffer, a_Color, m_Width * m_Height * sizeof(Pixel));
+        }
+        catch (...) {
+
+        }
     }
 
     void Surface::Centre(const char *a_String, int y1, Pixel color) {
