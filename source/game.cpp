@@ -53,7 +53,9 @@ const static vec2<> rocket_size(25, 24);
 const static float tank_radius = 12.f;
 const static float rocket_radius = 10.f;
 
-const static int threadCount = std::thread::hardware_concurrency() * 2;
+vector <LinkedList> redHealthBars = {};
+vector <LinkedList> blueHealthBars = {};
+
 mutex mtx;
 
 // -----------------------------------------------------------
@@ -175,6 +177,9 @@ void Game::Update(float deltaTime) {
     rockets.erase(
             std::remove_if(rockets.begin(), rockets.end(), [](const Rocket &rocket) { return !rocket.active; }),
             rockets.end());
+
+    // Sort HP bars
+    SortHealthBars();
 }
 
 void Game::UpdateTanks() {
@@ -313,6 +318,13 @@ void Game::UpdateExplosions() {
     }
 }
 
+void Game::SortHealthBars() {
+#ifdef USING_EASY_PROFILER
+    EASY_FUNCTION(profiler::colors::Yellow);
+#endif
+    redHealthBars = Sort(redTanks, 100);
+    blueHealthBars = Sort(blueTanks, 100);
+}
 void Game::Draw() {
 #ifdef USING_EASY_PROFILER
     EASY_FUNCTION(profiler::colors::Yellow);
@@ -397,7 +409,6 @@ void Game::Draw() {
         EASY_BLOCK("Draw Health_Bar_Red", profiler::colors::Red);
 #endif
         //Draw sorted health bars red tanks
-        vector <LinkedList> redHealthBars = Sort(redTanks, 100);
         int countRed = 0;
         for (auto &bucket : redHealthBars) {
             Node *currentRedTank = bucket.head;
@@ -414,7 +425,6 @@ void Game::Draw() {
         EASY_BLOCK("Draw Health_Bar_Blue", profiler::colors::Blue);
 #endif
         //Draw sorted health bars blue tanks
-        vector <LinkedList> blueHealthBars = Sort(blueTanks, 100);
         int countBlue = 0;
         for (auto &bucket : blueHealthBars) {
             Node *currentBlueTank = bucket.head;
@@ -482,10 +492,17 @@ void PP2::Game::MeasurePerformance() {
 // Main application tick function
 // -----------------------------------------------------------
 void Game::Tick(float deltaTime) {
-    if (!lock_update) {
-        Update(deltaTime);
-    }
-    Draw();
+    tbb::task_group group3;
+
+    group3.run([&] {
+        if (!lock_update) {
+            Update(deltaTime);
+        }
+    });
+    group3.run([&] {
+        Draw();
+    });
+    group3.wait();
 
     MeasurePerformance();
 
@@ -500,4 +517,6 @@ void Game::Tick(float deltaTime) {
     string frame_count_string = "FRAME: " + std::to_string(frame_count);
     frame_count_font->Print(screen, frame_count_string.c_str(), 350, 580);
 }
+
+
 

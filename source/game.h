@@ -131,6 +131,8 @@ namespace PP2 {
 
         void UpdateExplosions();
 
+        void SortHealthBars();
+
         ~Game();
     };
 }; // namespace PP2
