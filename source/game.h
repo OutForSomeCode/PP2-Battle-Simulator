@@ -8,6 +8,7 @@
 #include "smoke.h"
 #include "tank.h"
 #include <cstdint>
+#include <iostream>
 
 namespace PP2 {
 //forward declarations
