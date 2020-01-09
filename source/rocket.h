@@ -23,9 +23,6 @@ namespace PP2 {
 
         int id;
 
-        vec2<> position;
-        vec2<> speed;
-
         float collision_radius;
 
         bool active;
