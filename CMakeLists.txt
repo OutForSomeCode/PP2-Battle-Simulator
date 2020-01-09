@@ -6,7 +6,7 @@ SET(LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/")
 SET(ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/")
 
 option(USE_PACKAGE_MANAGER "Use conan for managing packages" ON)
-option(ENABLE_MICROPROFILE "Enable microprofile" OFF)
+option(ENABLE_EASY_PROFILER "Enable easy_profiler" OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 include(FeatureSummary)

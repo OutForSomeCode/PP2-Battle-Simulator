@@ -20,8 +20,9 @@ using namespace PP2;
 
 #include "game.h"
 
-#ifdef USE_MICROPROFILE
-#include "microprofile.h"
+#ifdef USING_EASY_PROFILER
+#include <easy/profiler.h>
+#define PROFILE_PARALLEL 1
 #endif
 
 static timer perf_timer;
@@ -121,6 +122,9 @@ Game::~Game() {
 // Iterates through all tanks and returns the closest enemy tank for the given tank
 // -----------------------------------------------------------
 Tank &Game::FindClosestEnemy(Tank &current_tank) {
+#if PROFILE_PARALLEL == 1
+    EASY_FUNCTION(profiler::colors::Orange);
+#endif
     float closest_distance = numeric_limits<float>::infinity();
     int closest_index = 0;
 
@@ -144,8 +148,8 @@ Tank &Game::FindClosestEnemy(Tank &current_tank) {
 // Targeting etc..
 // -----------------------------------------------------------
 void Game::Update(float deltaTime) {
-#ifdef USE_MICROPROFILE
-    MICROPROFILE_SCOPEI("Game", "Update", MP_YELLOW);
+#ifdef USING_EASY_PROFILER
+    EASY_FUNCTION(profiler::colors::Yellow);
 #endif
     //Update tanks
     UpdateTanks();
@@ -174,11 +178,14 @@ void Game::Update(float deltaTime) {
 }
 
 void Game::UpdateTanks() {
-#ifdef USE_MICROPROFILE
-    MICROPROFILE_SCOPEI("Game", "UpdateTanks", MP_YELLOW);
+#ifdef USING_EASY_PROFILER
+    EASY_FUNCTION(profiler::colors::Yellow);
 #endif
     tbb::parallel_for(tbb::blocked_range<int>(1, tanks.size()),
                       [&](tbb::blocked_range<int> r) {
+#if PROFILE_PARALLEL == 1
+                          EASY_BLOCK("Update Tank", profiler::colors::Gold);
+#endif
                           for (int i = r.begin(); i < r.end(); ++i) {
                               Tank &tank = tanks[i];
                               if (!tank.active)
@@ -237,8 +244,8 @@ void Game::UpdateTanks() {
 }
 
 void Game::UpdateSmoke() {
-#ifdef USE_MICROPROFILE
-    MICROPROFILE_SCOPEI("Game", "UpdateSmoke", MP_YELLOW);
+#ifdef USING_EASY_PROFILER
+    EASY_FUNCTION(profiler::colors::Yellow);
 #endif
     for (Smoke &uSmoke : smokes) {
         uSmoke.Tick();
@@ -246,11 +253,14 @@ void Game::UpdateSmoke() {
 }
 
 void Game::UpdateRockets() {
-#ifdef USE_MICROPROFILE
-    MICROPROFILE_SCOPEI("Game", "UpdateRockets", MP_YELLOW);
+#ifdef USING_EASY_PROFILER
+    EASY_FUNCTION(profiler::colors::Yellow);
 #endif
     tbb::parallel_for(tbb::blocked_range<int>(1, rockets.size()),
                       [&](tbb::blocked_range<int> r) {
+#if PROFILE_PARALLEL == 1
+                          EASY_BLOCK("Update Rocket", profiler::colors::Gold);
+#endif
                           for (int i = r.begin(); i < r.end(); ++i) {
                               Rocket &uRocket = rockets[i];
                               uRocket.Tick();
@@ -280,17 +290,23 @@ void Game::UpdateRockets() {
                               }
                           }
                       });
+#ifdef USING_EASY_PROFILER
+    //MICROPROFILE_COUNTER_SET("Game/rockets/", rockets.size());
+#endif
 }
 
 void Game::UpdateParticleBeams() {
+#ifdef USING_EASY_PROFILER
+    EASY_FUNCTION(profiler::colors::Yellow);
+#endif
     for (Particle_beam &particle_beam : particle_beams) {
         particle_beam.tick();
     }
 }
 
 void Game::UpdateExplosions() {
-#ifdef USE_MICROPROFILE
-    MICROPROFILE_SCOPEI("Game", "UpdateExplosions", MP_YELLOW);
+#ifdef USING_EASY_PROFILER
+    EASY_FUNCTION(profiler::colors::Yellow);
 #endif
     for (Explosion &explosion : explosions) {
         explosion.Tick();
@@ -298,16 +314,29 @@ void Game::UpdateExplosions() {
 }
 
 void Game::Draw() {
-    vector <future<void>> tasks = {};
-
+#ifdef USING_EASY_PROFILER
+    EASY_FUNCTION(profiler::colors::Yellow);
+#endif
+#ifdef USING_EASY_PROFILER
+    EASY_BLOCK("Clear the graphics window", profiler::colors::Green);
+#endif
     // clear the graphics window
     screen->Clear(0x00);
-
+#ifdef USING_EASY_PROFILER
+    EASY_END_BLOCK
+    EASY_BLOCK("Draw background", profiler::colors::Green);
+#endif
     //Draw background
     background.Draw(screen, 0, 0);
+#ifdef USING_EASY_PROFILER
+    EASY_END_BLOCK
+#endif
 
     tbb::parallel_for(tbb::blocked_range<int>(1, smokes.size()),
                       [&](tbb::blocked_range<int> r) {
+#if PROFILE_PARALLEL == 1
+                          EASY_BLOCK("Draw smokes", profiler::colors::Black);
+#endif
                           for (int i = r.begin(); i < r.end(); ++i) {
                               smokes[i].Draw(screen);
                           }
@@ -316,6 +345,9 @@ void Game::Draw() {
 
     tbb::parallel_for(tbb::blocked_range<int>(1, NUM_TANKS_BLUE + NUM_TANKS_RED),
                       [&](tbb::blocked_range<int> r) {
+#if PROFILE_PARALLEL == 1
+                          EASY_BLOCK("Draw tanks", profiler::colors::Red);
+#endif
                           for (int i = r.begin(); i < r.end(); ++i) {
                               tanks.at(i).Draw(screen);
 
@@ -329,6 +361,9 @@ void Game::Draw() {
 
     tbb::parallel_for(tbb::blocked_range<int>(1, rockets.size()),
                       [&](tbb::blocked_range<int> r) {
+#if PROFILE_PARALLEL == 1
+                          EASY_BLOCK("Draw rockets", profiler::colors::Red);
+#endif
                           for (int i = r.begin(); i < r.end(); ++i) {
                               rockets[i].Draw(screen);
                           }
@@ -337,6 +372,9 @@ void Game::Draw() {
 
     tbb::parallel_for(tbb::blocked_range<int>(1, explosions.size()),
                       [&](tbb::blocked_range<int> r) {
+#if PROFILE_PARALLEL == 1
+                          EASY_BLOCK("Draw explosions", profiler::colors::Orange);
+#endif
                           for (int i = r.begin(); i < r.end(); ++i) {
                               explosions[i].Draw(screen);
                           }
@@ -344,6 +382,9 @@ void Game::Draw() {
 
     tbb::parallel_for(tbb::blocked_range<int>(1, particle_beams.size()),
                       [&](tbb::blocked_range<int> r) {
+#if PROFILE_PARALLEL == 1
+                          EASY_BLOCK("Draw particle_beams", profiler::colors::Pink);
+#endif
                           for (int i = r.begin(); i < r.end(); ++i) {
                               particle_beams[i].Draw(screen);
                           }
@@ -352,6 +393,9 @@ void Game::Draw() {
     tbb::task_group group;
 
     group.run([&] {
+#if PROFILE_PARALLEL == 1
+        EASY_BLOCK("Draw Health_Bar_Red", profiler::colors::Red);
+#endif
         //Draw sorted health bars red tanks
         vector <LinkedList> redHealthBars = Sort(redTanks, 100);
         int countRed = 0;
@@ -366,6 +410,9 @@ void Game::Draw() {
     });
 
     group.run([&] {
+#if PROFILE_PARALLEL == 1
+        EASY_BLOCK("Draw Health_Bar_Blue", profiler::colors::Blue);
+#endif
         //Draw sorted health bars blue tanks
         vector <LinkedList> blueHealthBars = Sort(blueTanks, 100);
         int countBlue = 0;

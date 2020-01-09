@@ -3,10 +3,6 @@
 #include "Grid.h"
 #include "defines.h"
 
-#ifdef USE_MICROPROFILE
-#include "microprofile.h"
-#endif
-
 using namespace std;
 using namespace PP2;
 
@@ -36,9 +32,6 @@ vec2<int> Grid::GetGridCell(vec2<> position) {
 
 
 vector<vec2<int>> Grid::GetNeighbouringCells() {
-#ifdef USE_MICROPROFILE
-    MICROPROFILE_SCOPEI("Grid", "GetTanksAtPos", MP_RED);
-#endif
     vector<vec2<int>> cells = {
             {0,  0},
             {0,  1},
@@ -58,9 +51,6 @@ void Grid::AddTankToGridCell(Tank *tank) {
 }
 
 void Grid::MoveTankToGridCell(PP2::Tank *tank, vec2<int> newPos) {
-#ifdef USE_MICROPROFILE
-    MICROPROFILE_SCOPEI("Grid", "MoveTankToGridCell", MP_RED);
-#endif
     auto &gridCell = grid[tank->gridCell.x][tank->gridCell.y];
     grid[newPos.x][newPos.y].emplace_back(tank);
     for (int i = 0; i < gridCell.size(); ++i) {
@@ -69,8 +59,4 @@ void Grid::MoveTankToGridCell(PP2::Tank *tank, vec2<int> newPos) {
             break;
         }
     }
-
-#ifdef USE_MICROPROFILE
-    MICROPROFILE_COUNTER_SET("Grid/gird/", c.size());
-#endif
 }
