@@ -330,7 +330,7 @@ void Game::Draw() {
     EASY_FUNCTION(profiler::colors::Yellow);
 #endif
 #ifdef USING_EASY_PROFILER
-    EASY_BLOCK("Clear the graphics window", profiler::colors::Green);
+    EASY_BLOCK("Clear graphics", profiler::colors::Green);
 #endif
     // clear the graphics window
     screen->Clear(0x00);
@@ -343,23 +343,25 @@ void Game::Draw() {
 #ifdef USING_EASY_PROFILER
     EASY_END_BLOCK
 #endif
-
+#if PROFILE_PARALLEL == 1
+    EASY_BLOCK("Draw smokes", profiler::colors::Black);
+#endif
     tbb::parallel_for(tbb::blocked_range<int>(1, smokes.size()),
                       [&](tbb::blocked_range<int> r) {
-#if PROFILE_PARALLEL == 1
-                          EASY_BLOCK("Draw smokes", profiler::colors::Black);
-#endif
+
                           for (int i = r.begin(); i < r.end(); ++i) {
                               smokes[i].Draw(screen);
                           }
                       });
-
-
+#ifdef USING_EASY_PROFILER
+    EASY_END_BLOCK
+#endif
+#if PROFILE_PARALLEL == 1
+    EASY_BLOCK("Draw tanks", profiler::colors::Red);
+#endif
     tbb::parallel_for(tbb::blocked_range<int>(1, NUM_TANKS_BLUE + NUM_TANKS_RED),
                       [&](tbb::blocked_range<int> r) {
-#if PROFILE_PARALLEL == 1
-                          EASY_BLOCK("Draw tanks", profiler::colors::Red);
-#endif
+
                           for (int i = r.begin(); i < r.end(); ++i) {
                               tanks.at(i).Draw(screen);
 
@@ -370,38 +372,48 @@ void Game::Draw() {
                                           background.GetBuffer()[(int) tPos.x + (int) tPos.y * SCRWIDTH], 0x808080);
                           }
                       });
-
+#ifdef USING_EASY_PROFILER
+    EASY_END_BLOCK
+#endif
+#if PROFILE_PARALLEL == 1
+    EASY_BLOCK("Draw rockets", profiler::colors::Red);
+#endif
     tbb::parallel_for(tbb::blocked_range<int>(1, rockets.size()),
                       [&](tbb::blocked_range<int> r) {
-#if PROFILE_PARALLEL == 1
-                          EASY_BLOCK("Draw rockets", profiler::colors::Red);
-#endif
+
                           for (int i = r.begin(); i < r.end(); ++i) {
                               rockets[i].Draw(screen);
                           }
                       });
-
-
+#ifdef USING_EASY_PROFILER
+    EASY_END_BLOCK
+#endif
+#if PROFILE_PARALLEL == 1
+    EASY_BLOCK("Draw explosions", profiler::colors::Orange);
+#endif
     tbb::parallel_for(tbb::blocked_range<int>(1, explosions.size()),
                       [&](tbb::blocked_range<int> r) {
-#if PROFILE_PARALLEL == 1
-                          EASY_BLOCK("Draw explosions", profiler::colors::Orange);
-#endif
+
                           for (int i = r.begin(); i < r.end(); ++i) {
                               explosions[i].Draw(screen);
                           }
                       });
-
+#ifdef USING_EASY_PROFILER
+    EASY_END_BLOCK
+#endif
+#if PROFILE_PARALLEL == 1
+    EASY_BLOCK("Draw particle_beams", profiler::colors::Pink);
+#endif
     tbb::parallel_for(tbb::blocked_range<int>(1, particle_beams.size()),
                       [&](tbb::blocked_range<int> r) {
-#if PROFILE_PARALLEL == 1
-                          EASY_BLOCK("Draw particle_beams", profiler::colors::Pink);
-#endif
+
                           for (int i = r.begin(); i < r.end(); ++i) {
                               particle_beams[i].Draw(screen);
                           }
                       });
-
+#ifdef USING_EASY_PROFILER
+    EASY_END_BLOCK
+#endif
     tbb::task_group group;
 
     group.run([&] {

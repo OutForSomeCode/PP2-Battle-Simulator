@@ -188,6 +188,9 @@ int main(int argc, char **argv) {
 #endif
         tbb::task_group group2;
         group2.run([&] {
+#ifdef USING_EASY_PROFILER
+            EASY_BLOCK("Unlock", profiler::colors::Green);
+#endif
             SDL_UnlockTexture(frameBuffer);
             SDL_RenderCopy(renderer, frameBuffer, NULL, NULL);
             SDL_RenderPresent(renderer);
