@@ -186,7 +186,7 @@ void Game::UpdateTanks() {
 #ifdef USING_EASY_PROFILER
     EASY_FUNCTION(profiler::colors::Yellow);
 #endif
-    tbb::parallel_for(tbb::blocked_range<int>(1, tanks.size()),
+    tbb::parallel_for(tbb::blocked_range<int>(0, tanks.size()),
                       [&](tbb::blocked_range<int> r) {
 #if PROFILE_PARALLEL == 1
                           EASY_BLOCK("Update Tank", profiler::colors::Gold);
@@ -261,7 +261,7 @@ void Game::UpdateRockets() {
 #ifdef USING_EASY_PROFILER
     EASY_FUNCTION(profiler::colors::Yellow);
 #endif
-    tbb::parallel_for(tbb::blocked_range<int>(1, rockets.size()),
+    tbb::parallel_for(tbb::blocked_range<int>(0, rockets.size()),
                       [&](tbb::blocked_range<int> r) {
 #if PROFILE_PARALLEL == 1
                           EASY_BLOCK("Update Rocket", profiler::colors::Gold);
@@ -346,7 +346,7 @@ void Game::Draw() {
 #if PROFILE_PARALLEL == 1
     EASY_BLOCK("Draw smokes", profiler::colors::Black);
 #endif
-    tbb::parallel_for(tbb::blocked_range<int>(1, smokes.size()),
+    tbb::parallel_for(tbb::blocked_range<int>(0, smokes.size()),
                       [&](tbb::blocked_range<int> r) {
 
                           for (int i = r.begin(); i < r.end(); ++i) {
@@ -359,7 +359,7 @@ void Game::Draw() {
 #if PROFILE_PARALLEL == 1
     EASY_BLOCK("Draw tanks", profiler::colors::Red);
 #endif
-    tbb::parallel_for(tbb::blocked_range<int>(1, NUM_TANKS_BLUE + NUM_TANKS_RED),
+    tbb::parallel_for(tbb::blocked_range<int>(0, NUM_TANKS_BLUE + NUM_TANKS_RED),
                       [&](tbb::blocked_range<int> r) {
 
                           for (int i = r.begin(); i < r.end(); ++i) {
@@ -378,7 +378,7 @@ void Game::Draw() {
 #if PROFILE_PARALLEL == 1
     EASY_BLOCK("Draw rockets", profiler::colors::Red);
 #endif
-    tbb::parallel_for(tbb::blocked_range<int>(1, rockets.size()),
+    tbb::parallel_for(tbb::blocked_range<int>(0, rockets.size()),
                       [&](tbb::blocked_range<int> r) {
 
                           for (int i = r.begin(); i < r.end(); ++i) {
@@ -391,7 +391,7 @@ void Game::Draw() {
 #if PROFILE_PARALLEL == 1
     EASY_BLOCK("Draw explosions", profiler::colors::Orange);
 #endif
-    tbb::parallel_for(tbb::blocked_range<int>(1, explosions.size()),
+    tbb::parallel_for(tbb::blocked_range<int>(0, explosions.size()),
                       [&](tbb::blocked_range<int> r) {
 
                           for (int i = r.begin(); i < r.end(); ++i) {
@@ -404,7 +404,7 @@ void Game::Draw() {
 #if PROFILE_PARALLEL == 1
     EASY_BLOCK("Draw particle_beams", profiler::colors::Pink);
 #endif
-    tbb::parallel_for(tbb::blocked_range<int>(1, particle_beams.size()),
+    tbb::parallel_for(tbb::blocked_range<int>(0, particle_beams.size()),
                       [&](tbb::blocked_range<int> r) {
 
                           for (int i = r.begin(); i < r.end(); ++i) {

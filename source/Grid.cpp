@@ -52,6 +52,7 @@ void Grid::AddTankToGridCell(Tank *tank) {
 
 void Grid::MoveTankToGridCell(PP2::Tank *tank, vec2<int> newPos) {
     auto &gridCell = grid[tank->gridCell.x][tank->gridCell.y];
+    scoped_lock lock(mtx2);
     grid[newPos.x][newPos.y].emplace_back(tank);
     for (int i = 0; i < gridCell.size(); ++i) {
         if (gridCell[i] == tank) {
