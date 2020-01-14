@@ -12,7 +12,6 @@ set(SOURCE_FILES
         particle_beam.{h,cpp}
         rocket.{h,cpp}
         smoke.{h,cpp}
-        surface.{h,cpp}
         tank.{h,cpp}
         template.{h,cpp}
         defines.h
@@ -29,11 +28,10 @@ target_include_directories(${PROJECT_NAME} PUBLIC .)
 if (USE_PACKAGE_MANAGER)
     # Generate source groups for use in IDEs
     generate_source_groups(${SOURCE_FILES})
-    target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL CONAN_PKG::sdl2 CONAN_PKG::freeimage CONAN_PKG::tbb)
+    target_link_libraries(${PROJECT_NAME} PRIVATE CONAN_PKG::sdl2 CONAN_PKG::sdl2_image CONAN_PKG::sdl2_ttf CONAN_PKG::tbb)
 else ()
-    target_link_libraries(${PROJECT_NAME} PRIVATE OpenGL::GL TBB::tbb SDL2::SDL2)
-    target_include_directories(${PROJECT_NAME} PRIVATE ${FreeImage_INCLUDE_DIRS})
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${FREEIMAGE_LIBRARY})
+    target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_INCLUDE_DIRS} ${SDL2_image_INCLUDE_DIRS} ${SDL2_ttf_INCLUDE_DIRS})
+    target_link_libraries(${PROJECT_NAME} PRIVATE TBB::tbb ${SDL2_LIBRARIES} ${SDL2_image_LIBRARIES} ${SDL2_ttf_LIBRARIES})
 endif ()
 
 if (USE_PACKAGE_MANAGER)
@@ -43,18 +41,16 @@ endif ()
 
 
 if (MSVC)
-    target_link_libraries(${PROJECT_NAME} PRIVATE "ws2_32.lib")
     # set startup project for Visual Studio Builds
     set_property(
             DIRECTORY ${PROJECT_SOURCE_DIR}
             PROPERTY
             VS_STARTUP_PROJECT ${PROJECT_NAME}
     )
-    # set Visual Studio working directory to the Configuration directory
     set_target_properties(
             ${PROJECT_NAME}
             PROPERTIES
-            VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/source/$(Configuration)"
+            VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
     )
 endif ()
 
@@ -65,7 +61,7 @@ endif ()
 
 add_custom_target(
         copy_resources
-        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets/ $<TARGET_FILE_DIR:${PROJECT_NAME}>/assets/
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/assets/ ${CMAKE_BINARY_DIR}/assets/
         COMMENT "Copy the resources to the compiled directory"
         VERBATIM
 )

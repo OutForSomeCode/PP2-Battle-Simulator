@@ -1,41 +1,38 @@
 #pragma once
 
+#include <SDL2/SDL_render.h>
 #include "template.h"
-#include "tank.h"
-#include "surface.h"
 
-namespace PP2 {
+namespace PP2
+{
+class Rocket
+{
+public:
+    Rocket(vec2<> position, vec2<> direction, float collision_radius, allignments allignment, SDL_Texture* rocket_sprite);
 
-    class Rocket {
-    public:
-        Rocket(vec2<> position, vec2<> direction, float collision_radius, allignments allignment, Sprite *rocket_sprite);
+    ~Rocket();
 
-        ~Rocket();
+    void Tick();
 
-        void Tick();
+    void Draw(SDL_Renderer* screen);
 
-        void Draw(Surface *screen);
+    bool Intersects(vec2<> position_other, float radius_other) const;
 
-        bool Intersects(vec2<> position_other, float radius_other) const;
+    vec2<> position;
+    vec2<> speed;
 
-        bool operator==(const Rocket& rhs) const
-        {
-            return rhs.id == id;
-        }
+    int id;
 
-        int id;
+    float collision_radius;
 
-        vec2<> position;
-        vec2<> speed;
+    bool active;
 
-        float collision_radius;
+    allignments allignment;
 
-        bool active;
+    int current_frame;
+    SDL_Texture* rocket_sprite;
 
-        allignments allignment;
-
-        int current_frame;
-        Sprite *rocket_sprite;
-    };
-
+    SDL_Rect SrcR;
+    SDL_Rect DestR;
+};
 } // namespace PP2

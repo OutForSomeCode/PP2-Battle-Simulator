@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.12)
 project("PP2 Battle Simulator")
 
+SET(RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/")
+SET(LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/")
+SET(ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/")
+
 option(USE_PACKAGE_MANAGER "Use conan for managing packages" ON)
 option(ENABLE_EASY_PROFILER "Enable easy_profiler" OFF)
 
@@ -15,9 +19,12 @@ if (USE_PACKAGE_MANAGER)
             CMakeCM ROLLING
             )
 else ()
-    find_package(SDL2 REQUIRED)
-    find_package(FreeImage REQUIRED)
     find_package(TBB REQUIRED)
+    find_package(PkgConfig REQUIRED)
+
+    pkg_check_modules(SDL2 REQUIRED sdl2)
+    pkg_check_modules(SDL2_image REQUIRED SDL2_image)
+    pkg_check_modules(SDL2_ttf REQUIRED SDL2_ttf)
 endif ()
 
 find_package(OpenGL REQUIRED)

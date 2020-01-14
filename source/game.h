@@ -8,77 +8,137 @@
 #include "smoke.h"
 #include "tank.h"
 #include <cstdint>
+#include <iostream>
 
-namespace PP2 {
-//forward declarations
-    class Tank;
+namespace PP2
+{
+class Node
+{
+public:
 
-    class Rocket;
+    Node()
+        : value(0), next(nullptr) {}
 
-    class Smoke;
+    Node(int value)
+        : value(value), next(nullptr) {}
 
-    class Particle_beam;
+    int value;
+    Node* next;
+};
 
-    class Game {
-    public:
-        void SetTarget(Surface *surface) { screen = surface; }
+class LinkedList
+{
+public:
+    LinkedList()
+        : head(nullptr) {}
 
-        void Init();
+    void InsertValue(int value)
+    {
+        Node* new_node = new Node(value);
 
-        void Shutdown();
-
-        void Update(float deltaTime);
-
-        void Draw();
-
-        void Tick(float deltaTime);
-
-        void insertion_sort_tanks_health(const std::vector<Tank> &original, std::vector<const Tank *> &sorted_tanks,
-                                         UINT16 begin, UINT16 end);
-
-        void MeasurePerformance();
-
-        Tank &FindClosestEnemy(Tank &current_tank);
-
-        void MouseUp(int button) { /* implement if you want to detect mouse button presses */
+        if (head == nullptr || value <= head->value)
+        {
+            new_node->next = head;
+            head = new_node;
+            return;
         }
 
-        void MouseDown(int button) { /* implement if you want to detect mouse button presses */
+        Node* current = head;
+        while (current->next != nullptr && value >= current->next->value) { current = current->next; }
+
+        //Add node
+        new_node->next = current->next;
+        current->next = new_node;
+    }
+
+    void PrintList()
+    {
+        Node* current = head;
+        while (current != nullptr)
+        {
+            std::cout << current->value << ", ";
+            current = current->next;
         }
+    }
 
-        void MouseMove(int x, int y) { /* implement if you want to detect mouse movement */
-        }
+    Node* head;
+};
 
-        void KeyUp(int key) { /* implement if you want to handle keys */
-        }
+class Game
+{
+public:
+    void SetTarget(SDL_Renderer* surface) { screen = surface; }
 
-        void KeyDown(int key) { /* implement if you want to handle keys */
-        }
+    void Init();
 
-    private:
-        Surface *screen;
-        std::vector<Tank> tanks;
-        std::vector<Rocket> rockets;
-        std::vector<Smoke> smokes;
-        std::vector<Explosion> explosions;
-        std::vector<Particle_beam> particle_beams;
+    void Shutdown();
 
-        Font *frame_count_font;
-        long long frame_count = 0;
+    void Update(float deltaTime);
 
-        bool lock_update = false;
+    void Draw();
 
-        void UpdateTanks();
+    void Tick(float deltaTime);
 
-        void UpdateSmoke();
+    void MeasurePerformance();
 
-        void UpdateRockets();
+    Tank& FindClosestEnemy(Tank& current_tank);
 
-        void UpdateParticleBeams();
+    std::vector<LinkedList> Sort(std::vector<Tank*>& input, int n_buckets);
 
-        void UpdateExplosions();
+    void DrawTankHP(int i, char color, int health);
 
-        ~Game();
-    };
+    void MouseUp(int button)
+    {
+        /* implement if you want to detect mouse button presses */
+    }
 
+    void MouseDown(int button)
+    {
+        /* implement if you want to detect mouse button presses */
+    }
+
+    void MouseMove(int x, int y)
+    {
+        /* implement if you want to detect mouse movement */
+    }
+
+    void KeyUp(int key)
+    {
+        /* implement if you want to handle keys */
+    }
+
+    void KeyDown(int key)
+    {
+        /* implement if you want to handle keys */
+    }
+
+private:
+    SDL_Renderer* screen;
+    std::vector<Tank> tanks;
+    std::vector<Tank*> blueTanks;
+    std::vector<Tank*> redTanks;
+    std::vector<Rocket> rockets;
+    std::vector<Smoke> smokes;
+    std::vector<Explosion> explosions;
+    std::vector<Particle_beam> particle_beams;
+
+    //Font *frame_count_font;
+    long long frame_count = 0;
+
+    bool lock_update = false;
+
+    void UpdateTanks();
+
+    void UpdateSmoke();
+
+    void UpdateRockets();
+
+    void UpdateParticleBeams();
+
+    void UpdateExplosions();
+
+    void SortHealthBars();
+
+    ~Game();
+};
 }; // namespace PP2
