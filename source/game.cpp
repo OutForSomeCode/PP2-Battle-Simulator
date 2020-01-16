@@ -1,14 +1,14 @@
 using namespace std;
 
-#include "template.h"
 #include "Algorithms.h"
-#include <iostream>
-#include <string>
+#include "template.h"
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
+#include <iostream>
+#include <mutex>
+#include <string>
 #include <tbb/parallel_for.h>
 #include <tbb/task_group.h>
-#include <SDL2/SDL_ttf.h>
-#include <mutex>
 
 using namespace PP2;
 
@@ -33,21 +33,21 @@ static timer perf_timer;
 static float duration;
 
 //Load sprite files and initialize sprites
-static SDL_Surface *background_img = SDL_LoadBMP("assets/Background_Grass.bmp");
-static SDL_Surface *tank_red_img = SDL_LoadBMP("assets/Tank_Proj2.bmp");
-static SDL_Surface *tank_blue_img = SDL_LoadBMP("assets/Tank_Blue_Proj2.bmp");
-static SDL_Surface *rocket_red_img = SDL_LoadBMP("assets/Rocket_Proj2.bmp");
-static SDL_Surface *rocket_blue_img = SDL_LoadBMP("assets/Rocket_Blue_Proj2.bmp");
-static SDL_Surface *particle_beam_img = SDL_LoadBMP("assets/Particle_Beam.bmp");
-static SDL_Surface *smoke_img = SDL_LoadBMP("assets/Smoke.bmp");
-static SDL_Surface *explosion_img = SDL_LoadBMP("assets/Explosion.bmp");
+static SDL_Surface* background_img = SDL_LoadBMP("assets/Background_Grass.bmp");
+static SDL_Surface* tank_red_img = SDL_LoadBMP("assets/Tank_Proj2.bmp");
+static SDL_Surface* tank_blue_img = SDL_LoadBMP("assets/Tank_Blue_Proj2.bmp");
+static SDL_Surface* rocket_red_img = SDL_LoadBMP("assets/Rocket_Proj2.bmp");
+static SDL_Surface* rocket_blue_img = SDL_LoadBMP("assets/Rocket_Blue_Proj2.bmp");
+static SDL_Surface* particle_beam_img = SDL_LoadBMP("assets/Particle_Beam.bmp");
+static SDL_Surface* smoke_img = SDL_LoadBMP("assets/Smoke.bmp");
+static SDL_Surface* explosion_img = SDL_LoadBMP("assets/Explosion.bmp");
 
-TTF_Font *FPS;
-TTF_Font *End;
+TTF_Font* FPS;
+TTF_Font* End;
 static SDL_Color White = {255, 255, 255};
 static SDL_Rect framecounter_message_rect = {5, 5, 100, 50}; //create a rect
-SDL_Surface *text_surface;
-SDL_Texture *text_texture;
+SDL_Surface* text_surface;
+SDL_Texture* text_texture;
 
 SDL_Texture* tankthreads;
 SDL_Texture* tank_red;
@@ -66,8 +66,8 @@ const static float rocket_radius = 10.f;
 
 vector<LinkedList<int>> redHealthBars = {};
 vector<LinkedList<int>> blueHealthBars = {};
-vector<LinkedList<vec2<>>> red_KD_median = {};
-vector<LinkedList<vec2<>>> blue_KD_median = {};
+KD_node* red_Root = nullptr;
+KD_node* blue_Root = nullptr;
 vector<SDL_Point> drawPoints = {};
 
 #define LOAD_TEX(_FIELD_) SDL_CreateTextureFromSurface(screen, _FIELD_);
@@ -84,7 +84,8 @@ SDL_Texture* end_message_texturel2;
 // -----------------------------------------------------------
 // Initialize the application
 // -----------------------------------------------------------
-void Game::Init() {
+void Game::Init()
+{
     //initiate grid to allocate memory
     auto instance = Grid::Instance();
 
@@ -98,13 +99,13 @@ void Game::Init() {
     explosion = LOAD_TEX(explosion_img);
     particle_beam_sprite = LOAD_TEX(particle_beam_img);
 
-    FPS = TTF_OpenFont("assets/digital-7.ttf", 64); //this opens a font style and sets a size
+    FPS = TTF_OpenFont("assets/digital-7.ttf", 64);  //this opens a font style and sets a size
     End = TTF_OpenFont("assets/digital-7.ttf", 256); //this opens a font style and sets a size
 
-    Uint32 *pixels = nullptr;
+    Uint32* pixels = nullptr;
     int pitch = 0;
     // Now let's make our "pixels" pointer point to the texture data.
-    SDL_LockTexture(tankthreads, nullptr, (void **) &pixels, &pitch);
+    SDL_LockTexture(tankthreads, nullptr, (void**)&pixels, &pitch);
     memcpy(pixels, background_img->pixels, SCRWIDTH * SCRHEIGHT * 4);
     SDL_UnlockTexture(tankthreads);
 
@@ -112,7 +113,7 @@ void Game::Init() {
     blueTanks.reserve(NUM_TANKS_BLUE);
     redTanks.reserve(NUM_TANKS_RED);
 
-    uint rows = (uint) sqrt(NUM_TANKS_BLUE + NUM_TANKS_RED);
+    uint rows = (uint)sqrt(NUM_TANKS_BLUE + NUM_TANKS_RED);
     uint max_rows = 12;
 
     float start_blue_x = tank_size.x + 10.0f;
@@ -124,12 +125,14 @@ void Game::Init() {
     float spacing = 15.0f;
 
     //Spawn blue tanks
-    for (int i = 0; i < NUM_TANKS_BLUE; i++) {
+    for (int i = 0; i < NUM_TANKS_BLUE; i++)
+    {
         tanks.emplace_back(start_blue_x + ((i % max_rows) * spacing), start_blue_y + ((i / max_rows) * spacing), BLUE,
                            tank_blue, smoke, 1200, 600, tank_radius, TANK_MAX_HEALTH, TANK_MAX_SPEED);
     }
     //Spawn red tanks
-    for (int i = 0; i < NUM_TANKS_RED; i++) {
+    for (int i = 0; i < NUM_TANKS_RED; i++)
+    {
         tanks.emplace_back(start_red_x + ((i % max_rows) * spacing), start_red_y + ((i / max_rows) * spacing), RED,
                            tank_red,
                            smoke, 80, 80, tank_radius, TANK_MAX_HEALTH, TANK_MAX_SPEED);
@@ -140,10 +143,13 @@ void Game::Init() {
     particle_beams.emplace_back(vec2<>(80, 80), vec2<>(100, 50), particle_beam_sprite, PARTICLE_BEAM_HIT_VALUE);
     particle_beams.emplace_back(vec2<>(1200, 600), vec2<>(100, 50), particle_beam_sprite, PARTICLE_BEAM_HIT_VALUE);
 
-    for (auto &tank : tanks) {
+    for (auto& tank : tanks)
+    {
         instance->AddTankToGridCell(&tank);
-        if (tank.allignment == RED) redTanks.emplace_back(&tank);
-        else blueTanks.emplace_back(&tank);
+        if (tank.allignment == RED)
+            redTanks.emplace_back(&tank);
+        else
+            blueTanks.emplace_back(&tank);
     }
 }
 
@@ -152,39 +158,45 @@ void Game::Init() {
 // -----------------------------------------------------------
 void Game::Shutdown() {}
 
-Game::~Game() {
+Game::~Game()
+{
     //delete frame_count_font;
     SDL_DestroyTexture(text_texture);
     SDL_FreeSurface(text_surface);
 }
 
-void Game::BuildKDTree() {
+void Game::BuildKDTree()
+{
 
-    tbb::task_group KD_sort_group;
-    KD_sort_group.run([&] { red_KD_median = KD_sort(redTanks, 100); });
-    KD_sort_group.run([&] { blue_KD_median = KD_sort(blueTanks, 100); });
-    KD_sort_group.wait();
+
+    /*tbb::task_group KD_sort_group;
+    KD_sort_group.run([&] {
+        Tank* red_KD_median = KD_sort(redTanks);
+    });
+    KD_sort_group.run([&] {
+        Tank* blue_KD_median = KD_sort(blueTanks);
+    });
+    KD_sort_group.wait();*/
 }
 
 // -----------------------------------------------------------
 // Iterates through all tanks and returns the closest enemy tank for the given tank
 // -----------------------------------------------------------
-Tank &Game::FindClosestEnemy(Tank &current_tank) {
+Tank& Game::FindClosestEnemy(Tank& current_tank)
+{
 #if PROFILE_PARALLEL == 1
     EASY_FUNCTION(profiler::colors::Purple);
 #endif
-    if (build_KD_tree) {
-        BuildKDTree();
-        build_KD_tree = false;
-    }
-
     float closest_distance = numeric_limits<float>::infinity();
     int closest_index = 0;
 
-    for (int i = 0; i < tanks.size(); i++) {
-        if (tanks.at(i).allignment != current_tank.allignment && tanks.at(i).active) {
+    for (int i = 0; i < tanks.size(); i++)
+    {
+        if (tanks.at(i).allignment != current_tank.allignment && tanks.at(i).active)
+        {
             float sqrDist = fabsf((tanks.at(i).Get_Position() - current_tank.Get_Position()).sqrLength());
-            if (sqrDist < closest_distance) {
+            if (sqrDist < closest_distance)
+            {
                 closest_distance = sqrDist;
                 closest_index = i;
             }
@@ -200,7 +212,8 @@ Tank &Game::FindClosestEnemy(Tank &current_tank) {
 // Collision detection
 // Targeting etc..
 // -----------------------------------------------------------
-void Game::Update(float deltaTime) {
+void Game::Update(float deltaTime)
+{
 #ifdef USING_EASY_PROFILER
     EASY_FUNCTION(profiler::colors::Yellow);
 #endif
@@ -218,7 +231,7 @@ void Game::Update(float deltaTime) {
 
     //Remove when done with remove erase idiom
     explosions.erase(std::remove_if(explosions.begin(), explosions.end(),
-                                    [](const Explosion &explosion) { return explosion.done(); }),
+                                    [](const Explosion& explosion) { return explosion.done(); }),
                      explosions.end());
 
     //Update rockets
@@ -226,14 +239,15 @@ void Game::Update(float deltaTime) {
 
     //Remove exploded rockets with remove erase idiom
     rockets.erase(
-            std::remove_if(rockets.begin(), rockets.end(), [](const Rocket &rocket) { return !rocket.active; }),
-            rockets.end());
+        std::remove_if(rockets.begin(), rockets.end(), [](const Rocket& rocket) { return !rocket.active; }),
+        rockets.end());
 
     // Sort HP bars
     SortHealthBars();
 }
 
-void Game::UpdateTanks() {
+void Game::UpdateTanks()
+{
 #ifdef USING_EASY_PROFILER
     EASY_FUNCTION(profiler::colors::Yellow);
 #endif
@@ -242,34 +256,40 @@ void Game::UpdateTanks() {
 #if PROFILE_PARALLEL == 1
                           EASY_BLOCK("Update Tank", profiler::colors::Gold);
 #endif
-                          for (int i = r.begin(); i < r.end(); ++i) {
-                              Tank &tank = tanks[i];
+                          for (int i = r.begin(); i < r.end(); ++i)
+                          {
+                              Tank& tank = tanks[i];
                               if (!tank.active) continue;
 
                               //Check tank collision and nudge tanks away from each other
-                              for (auto cell : Grid::Instance()->GetNeighbouringCells()) {
+                              for (auto cell : Grid::Instance()->GetNeighbouringCells())
+                              {
                                   int x = tank.gridCell.x + cell.x;
                                   int y = tank.gridCell.y + cell.y;
                                   if (x < 0 || y < 0 || x > GRID_SIZE_X || y > GRID_SIZE_Y) continue;
 
-                                  for (auto &oTank : Grid::Instance()->grid[x][y]) {
+                                  for (auto& oTank : Grid::Instance()->grid[x][y])
+                                  {
                                       if (&tank == oTank) continue;
 
                                       vec2<> dir = tank.Get_Position() - oTank->Get_Position();
 
                                       float colSquaredLen =
-                                              (tank.Get_collision_radius() * tank.Get_collision_radius()) +
-                                              (oTank->Get_collision_radius() * oTank->Get_collision_radius());
+                                          (tank.Get_collision_radius() * tank.Get_collision_radius()) +
+                                          (oTank->Get_collision_radius() * oTank->Get_collision_radius());
 
                                       if (dir.sqrLength() < colSquaredLen) { tank.Push(dir.normalized(), 1.f); }
                                   }
                               }
 
                               //Check if inside particle beam
-                              for (Particle_beam &particle_beam : particle_beams) {
+                              for (Particle_beam& particle_beam : particle_beams)
+                              {
                                   if (particle_beam.rectangle.intersectsCircle(tank.Get_Position(),
-                                                                               tank.Get_collision_radius())) {
-                                      if (tank.hit(particle_beam.damage)) {
+                                                                               tank.Get_collision_radius()))
+                                  {
+                                      if (tank.hit(particle_beam.damage))
+                                      {
                                           smokes.emplace_back(smoke, tank.position - vec2<>(0, 48));
                                       }
                                   }
@@ -280,7 +300,7 @@ void Game::UpdateTanks() {
 
                               //Shoot at closest target if reloaded
                               if (!tank.Rocket_Reloaded()) continue;
-                              Tank &target = FindClosestEnemy(tank);
+                              Tank& target = FindClosestEnemy(tank);
                               scoped_lock lock(mtx);
 
                               rockets.emplace_back(tank.position,
@@ -293,14 +313,19 @@ void Game::UpdateTanks() {
                       });
 }
 
-void Game::UpdateSmoke() {
+void Game::UpdateSmoke()
+{
 #ifdef USING_EASY_PROFILER
     EASY_FUNCTION(profiler::colors::Yellow);
 #endif
-    for (Smoke &uSmoke : smokes) { uSmoke.Tick(); }
+    for (Smoke& uSmoke : smokes)
+    {
+        uSmoke.Tick();
+    }
 }
 
-void Game::UpdateRockets() {
+void Game::UpdateRockets()
+{
 #ifdef USING_EASY_PROFILER
     EASY_FUNCTION(profiler::colors::Yellow);
 #endif
@@ -309,24 +334,29 @@ void Game::UpdateRockets() {
 #if PROFILE_PARALLEL == 1
                           EASY_BLOCK("Update Rocket", profiler::colors::Gold);
 #endif
-                          for (int i = r.begin(); i < r.end(); ++i) {
-                              Rocket &uRocket = rockets[i];
+                          for (int i = r.begin(); i < r.end(); ++i)
+                          {
+                              Rocket& uRocket = rockets[i];
                               uRocket.Tick();
 
                               //Check if rocket collides with enemy tank, spawn explosion and if tank is destroyed spawn a smoke plume
-                              for (auto cell : Grid::Instance()->GetNeighbouringCells()) {
+                              for (auto cell : Grid::Instance()->GetNeighbouringCells())
+                              {
                                   vec2<int> rocketGridCell = Grid::GetGridCell(uRocket.position);
                                   int x = rocketGridCell.x + cell.x;
                                   int y = rocketGridCell.y + cell.y;
                                   if (x < 0 || y < 0 || x > GRID_SIZE_X || y > GRID_SIZE_Y) continue;
 
-                                  for (auto &tank : Grid::Instance()->grid[x][y]) {
+                                  for (auto& tank : Grid::Instance()->grid[x][y])
+                                  {
                                       if (tank->active && (tank->allignment != uRocket.allignment) &&
-                                          uRocket.Intersects(tank->position, tank->collision_radius)) {
+                                          uRocket.Intersects(tank->position, tank->collision_radius))
+                                      {
                                           scoped_lock lock(mtx);
                                           explosions.emplace_back(explosion, tank->position);
 
-                                          if (tank->hit(ROCKET_HIT_VALUE)) {
+                                          if (tank->hit(ROCKET_HIT_VALUE))
+                                          {
                                               smokes.emplace_back(smoke, tank->position - vec2<>(0, 48));
                                           }
 
@@ -342,31 +372,41 @@ void Game::UpdateRockets() {
 #endif
 }
 
-void Game::UpdateParticleBeams() {
+void Game::UpdateParticleBeams()
+{
 #ifdef USING_EASY_PROFILER
     EASY_FUNCTION(profiler::colors::Yellow);
 #endif
-    for (Particle_beam &particle_beam : particle_beams) { particle_beam.tick(); }
+    for (Particle_beam& particle_beam : particle_beams)
+    {
+        particle_beam.tick();
+    }
 }
 
-void Game::UpdateExplosions() {
+void Game::UpdateExplosions()
+{
 #ifdef USING_EASY_PROFILER
     EASY_FUNCTION(profiler::colors::Yellow);
 #endif
-    for (Explosion &explosion : explosions) { explosion.Tick(); }
+    for (Explosion& explosion : explosions)
+    {
+        explosion.Tick();
+    }
 }
 
-void Game::SortHealthBars() {
+void Game::SortHealthBars()
+{
 #ifdef USING_EASY_PROFILER
     EASY_FUNCTION(profiler::colors::Yellow);
 #endif
     tbb::task_group HP_sort_group;
-    HP_sort_group.run([&] { redHealthBars = HP_sort(redTanks, 100); });
-    HP_sort_group.run([&] { blueHealthBars = HP_sort(blueTanks, 100); });
+    HP_sort_group.run([&] { redHealthBars = LinkedList<int>::Sort(redTanks, 100); });
+    HP_sort_group.run([&] { blueHealthBars = LinkedList<int>::Sort(blueTanks, 100); });
     HP_sort_group.wait();
 }
 
-void Game::Draw() {
+void Game::Draw()
+{
 #ifdef USING_EASY_PROFILER
     EASY_FUNCTION(profiler::colors::Yellow);
 #endif
@@ -378,27 +418,32 @@ void Game::Draw() {
 #ifdef USING_EASY_PROFILER
     EASY_BLOCK("Draw tanks", profiler::colors::Red);
 #endif
-    Uint32 *pixels = nullptr;
+    Uint32* pixels = nullptr;
     int pitch = 0;
     // Now let's make our "pixels" pointer point to the texture data.
-    SDL_LockTexture(tankthreads, nullptr, (void **) &pixels, &pitch);
+    SDL_LockTexture(tankthreads, nullptr, (void**)&pixels, &pitch);
 
-    try {
+    try
+    {
         //Draw sprites
-        for (int i = 0; i < NUM_TANKS_BLUE + NUM_TANKS_RED; i++) {
+        for (int i = 0; i < NUM_TANKS_BLUE + NUM_TANKS_RED; i++)
+        {
             tanks.at(i).Draw(screen);
 
             vec2 tPos = tanks.at(i).Get_Position();
             // tread marks
-            if ((tPos.x >= 0) && (tPos.x < SCRWIDTH) && (tPos.y >= 0) && (tPos.y < SCRHEIGHT)) {
+            if ((tPos.x >= 0) && (tPos.x < SCRWIDTH) && (tPos.y >= 0) && (tPos.y < SCRHEIGHT))
+            {
                 // Before setting the color, we need to know where we have to place it.
-                Uint32 pixelPosition = (int) tPos.y * (pitch / sizeof(unsigned int)) + (int) tPos.x;
+                Uint32 pixelPosition = (int)tPos.y * (pitch / sizeof(unsigned int)) + (int)tPos.x;
                 // Now we can set the pixel(s) we want.
                 pixels[pixelPosition] *= 0x808080; //Black;
             }
         }
     }
-    catch (...) {}
+    catch (...)
+    {
+    }
 
     // Also don't forget to unlock your texture once you're done.
 
@@ -406,13 +451,16 @@ void Game::Draw() {
     EASY_END_BLOCK
 #endif
 
-    for (Rocket &r : rockets) { r.Draw(screen); }
+    for (Rocket& r : rockets)
+    {
+        r.Draw(screen);
+    }
 
-    for (Smoke &s : smokes) { s.Draw(screen); }
+    for (Smoke& s : smokes) { s.Draw(screen); }
 
-    for (Particle_beam &b : particle_beams) { b.Draw(screen); }
+    for (Particle_beam& b : particle_beams) { b.Draw(screen); }
 
-    for (Explosion &e : explosions) { e.Draw(screen); }
+    for (Explosion& e : explosions) { e.Draw(screen); }
 
     SDL_Rect red = {0, 0, SCRWIDTH, HEALTH_BAR_HEIGHT};
     SDL_Rect blue = {0, (SCRHEIGHT - HEALTH_BAR_HEIGHT) - 1, SCRWIDTH, SCRWIDTH - 1};
@@ -428,9 +476,11 @@ void Game::Draw() {
     //Draw sorted health bars red tanks
 
     int countRed = 0;
-    for (auto &bucket : redHealthBars) {
-        Node<int> *currentRedTank = bucket.head;
-        while (currentRedTank != nullptr) {
+    for (auto& bucket : redHealthBars)
+    {
+        Node<int>* currentRedTank = bucket.head;
+        while (currentRedTank != nullptr)
+        {
             DrawTankHP(countRed, 'r', currentRedTank->value);
             currentRedTank = currentRedTank->next;
             countRed++;
@@ -446,9 +496,11 @@ void Game::Draw() {
 #endif
     //Draw sorted health bars blue tanks
     int countBlue = 0;
-    for (auto &bucket : blueHealthBars) {
-        Node<int> *currentBlueTank = bucket.head;
-        while (currentBlueTank != nullptr) {
+    for (auto& bucket : blueHealthBars)
+    {
+        Node<int>* currentBlueTank = bucket.head;
+        while (currentBlueTank != nullptr)
+        {
             DrawTankHP(countBlue, 'b', currentBlueTank->value);
             currentBlueTank = currentBlueTank->next;
             countBlue++;
@@ -461,7 +513,8 @@ void Game::Draw() {
 #endif
 }
 
-void Game::DrawTankHP(int i, char color, int health) {
+void Game::DrawTankHP(int i, char color, int health)
+{
     if (health == TANK_MAX_HEALTH) return;
 
     int health_bar_start_x = i * (HEALTH_BAR_WIDTH + HEALTH_BAR_SPACING) + HEALTH_BARS_OFFSET_X;
@@ -471,8 +524,8 @@ void Game::DrawTankHP(int i, char color, int health) {
 
     drawPoints.emplace_back(SDL_Point{health_bar_start_x, health_bar_start_y});
     drawPoints.emplace_back(
-            SDL_Point{health_bar_end_x, health_bar_end_y + (int) ((double) HEALTH_BAR_HEIGHT * (1 - ((double) health /
-                                                                                                     (double) TANK_MAX_HEALTH)))});
+        SDL_Point{health_bar_end_x, health_bar_end_y + (int)((double)HEALTH_BAR_HEIGHT * (1 - ((double)health /
+                                                                                               (double)TANK_MAX_HEALTH)))});
 }
 
 // -----------------------------------------------------------
@@ -480,7 +533,8 @@ void Game::DrawTankHP(int i, char color, int health) {
 // Updating REF_PERFORMANCE at the top of this file with the value
 // on your machine gives you an idea of the speedup your optimizations give
 // -----------------------------------------------------------
-void PP2::Game::MeasurePerformance() {
+void PP2::Game::MeasurePerformance()
+{
     char buffer[128];
     if (frame_count >= MAX_FRAMES)
     {
@@ -505,7 +559,8 @@ void PP2::Game::MeasurePerformance() {
         frame_count--;
     }
 
-    if (lock_update) {
+    if (lock_update)
+    {
         SDL_Rect r = {420, 170, 450, 260};
         SDL_SetRenderDrawColor(screen, 0, 0, 0, 255);
         SDL_RenderFillRect(screen, &r);
@@ -517,9 +572,11 @@ void PP2::Game::MeasurePerformance() {
 // -----------------------------------------------------------
 // Main application tick function
 // -----------------------------------------------------------
-void Game::Tick(float deltaTime) {
+void Game::Tick(float deltaTime)
+{
     tbb::task_group g;
-    if (!lock_update) {
+    if (!lock_update)
+    {
         g.run([&] {
 #ifdef USING_EASY_PROFILER
             EASY_BLOCK("SDL_UnlockTexture", profiler::colors::Orange);
@@ -527,7 +584,11 @@ void Game::Tick(float deltaTime) {
             SDL_UnlockTexture(tankthreads);
         });
         Update(deltaTime);
-    } else { SDL_UnlockTexture(tankthreads); }
+    }
+    else
+    {
+        SDL_UnlockTexture(tankthreads);
+    }
 
     Draw();
 
@@ -536,7 +597,8 @@ void Game::Tick(float deltaTime) {
 #if PROFILE_PARALLEL == 1
     EASY_BLOCK("Print frame count", profiler::colors::Gold);
 #endif
-    if (!lock_update) {
+    if (!lock_update)
+    {
         //Print frame count
         frame_count++;
         char buffer[6];
