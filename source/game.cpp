@@ -66,8 +66,6 @@ const static float rocket_radius = 10.f;
 
 vector<LinkedList<int>> redHealthBars = {};
 vector<LinkedList<int>> blueHealthBars = {};
-KD_node* red_Root = nullptr;
-KD_node* blue_Root = nullptr;
 vector<SDL_Point> drawPoints = {};
 
 #define LOAD_TEX(_FIELD_) SDL_CreateTextureFromSurface(screen, _FIELD_);
@@ -167,16 +165,14 @@ Game::~Game()
 
 void Game::BuildKDTree()
 {
-
-
-    /*tbb::task_group KD_sort_group;
+    tbb::task_group KD_sort_group;
     KD_sort_group.run([&] {
-        Tank* red_KD_median = KD_sort(redTanks);
+        red_KD_Tree = KD_Tree(redTanks);
     });
     KD_sort_group.run([&] {
-        Tank* blue_KD_median = KD_sort(blueTanks);
+        blue_KD_Tree = KD_Tree(blueTanks);
     });
-    KD_sort_group.wait();*/
+    KD_sort_group.wait();
 }
 
 // -----------------------------------------------------------
@@ -187,6 +183,11 @@ Tank& Game::FindClosestEnemy(Tank& current_tank)
 #if PROFILE_PARALLEL == 1
     EASY_FUNCTION(profiler::colors::Purple);
 #endif
+    if (buildKDTree){
+        BuildKDTree();
+        buildKDTree = false;
+    }
+
     float closest_distance = numeric_limits<float>::infinity();
     int closest_index = 0;
 
