@@ -33,7 +33,7 @@ template <class T>
 class LinkedList
 {
   public:
-    LinkedList();
+    LinkedList() : head(nullptr){};
 
     ~LinkedList()
     {
@@ -50,32 +50,34 @@ class LinkedList
 class KD_node
 {
   public:
-    KD_node(Tank* tank) : tank(tank), left(nullptr), right(nullptr){};
+    KD_node(Tank* tank) : tank(tank){};
     ~KD_node()
     {
         delete left;
         delete right;
     };
-    Tank* tank;
-    KD_node *left, *right;
+    Tank* tank = nullptr;
+    KD_node* right = nullptr;
+    KD_node* left = nullptr;
 };
 
 class KD_Tree
 {
   public:
-    KD_Tree(){};
-    KD_Tree(std::vector<Tank*>& input);
+    explicit KD_Tree(std::vector<Tank*>& input);
     ~KD_Tree()
     {
         delete root;
     };
     static Tank* median(std::vector<Tank*>& input);
-    KD_node* insertTank(Tank* _tank);
+    void insertTank(Tank* _tank);
     Tank* findClosestTank(Tank* _tank);
 
   private:
-    static KD_node* insertRec(KD_node* root, Tank* tank, unsigned depth);
-    static Tank* searchRec(KD_node* root, Tank* _tank, unsigned depth);
+    KD_node* insertRec(KD_node* _root, Tank* tank, unsigned depth);
+    Tank* searchRec(KD_node* _root, Tank* _tank, unsigned depth);
     KD_node* root = nullptr;
+    float min_distance = 0;
+    Tank* closest_Tank = nullptr;
 };
 } // namespace PP2

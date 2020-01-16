@@ -65,7 +65,7 @@ const static vec2<> rocket_size(25, 24);
 const static float tank_radius = 12.f;
 const static float rocket_radius = 10.f;
 
-vector<LinkedList<int>> redHealthBars = {};
+vector<LinkedList<int>> redHealthBars(50); // = {};
 vector<LinkedList<int>> blueHealthBars = {};
 vector<SDL_Point> drawPoints = {};
 
@@ -160,14 +160,19 @@ Game::~Game()
 
 void Game::BuildKDTree()
 {
-    tbb::task_group KD_sort_group;
+    /*tbb::task_group KD_sort_group;
     KD_sort_group.run([&] {
         red_KD_Tree = KD_Tree(redTanks);
     });
     KD_sort_group.run([&] {
         blue_KD_Tree = KD_Tree(blueTanks);
     });
-    KD_sort_group.wait();
+    KD_sort_group.wait();*/
+
+    blue_KD_Tree = new KD_Tree(blueTanks);
+    red_KD_Tree = new KD_Tree(redTanks);
+    // auto t = blue_KD_Tree.findClosestTank(blueTanks[5])->position;
+    //std::cout << "The Closest Tank is (" << t.x << " " << t.y << ")\n";
 }
 
 // -----------------------------------------------------------
@@ -175,14 +180,10 @@ void Game::BuildKDTree()
 // -----------------------------------------------------------
 Tank& Game::FindClosestEnemy(Tank& current_tank)
 {
+    buildKDTree = true;
 #if PROFILE_PARALLEL == 1
     EASY_FUNCTION(profiler::colors::Purple);
 #endif
-    if (buildKDTree){
-        BuildKDTree();
-        buildKDTree = false;
-    }
-
     float closest_distance = numeric_limits<float>::infinity();
     int closest_index = 0;
 
@@ -213,6 +214,10 @@ void Game::Update(float deltaTime)
 #ifdef USING_EASY_PROFILER
     EASY_FUNCTION(profiler::colors::Yellow);
 #endif
+
+    if (frame_count % 200 == 0)
+        BuildKDTree();
+
     //Update tanks
     UpdateTanks();
 
@@ -253,6 +258,7 @@ void Game::UpdateTanks()
                           EASY_BLOCK("Update Tank", profiler::colors::Gold);
 #endif
                           for (int i = r.begin(); i < r.end(); ++i)
+                          //for (int i = 0; i < tanks.size(); ++i)
                           {
                               Tank& tank = tanks[i];
                               if (!tank.active) continue;
@@ -296,11 +302,11 @@ void Game::UpdateTanks()
 
                               //Shoot at closest target if reloaded
                               if (!tank.Rocket_Reloaded()) continue;
-                              Tank& target = FindClosestEnemy(tank);
-                              scoped_lock lock(mtx);
 
+                              Tank* target = tank.allignment == RED ? blue_KD_Tree->findClosestTank(&tank) : red_KD_Tree->findClosestTank(&tank); //FindClosestEnemy(tank);
+                              scoped_lock lock(mtx);
                               rockets.emplace_back(tank.position,
-                                                   (target.Get_Position() - tank.position).normalized() * 3,
+                                                   (target->Get_Position() - tank.position).normalized() * 3,
                                                    rocket_radius,
                                                    tank.allignment,
                                                    ((tank.allignment == RED) ? rocket_red : rocket_blue));
