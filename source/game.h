@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Grid.h"
 #include "Algorithms.h"
+#include "Grid.h"
 #include "defines.h"
 #include "explosion.h"
 #include "particle_beam.h"
@@ -13,10 +13,9 @@
 
 namespace PP2
 {
-
 class Game
 {
-public:
+  public:
     void SetTarget(SDL_Renderer* surface) { screen = surface; }
 
     void Init();
@@ -62,7 +61,7 @@ public:
         /* implement if you want to handle keys */
     }
 
-private:
+  private:
     SDL_Renderer* screen;
     std::vector<Tank> tanks;
     std::vector<Tank*> blueTanks;
@@ -73,8 +72,8 @@ private:
     std::vector<Particle_beam> particle_beams;
 
     bool buildKDTree = true;
-    KD_Tree red_KD_Tree;
-    KD_Tree blue_KD_Tree;
+    KD_Tree* red_KD_Tree;
+    KD_Tree* blue_KD_Tree;
 
     //Font *frame_count_font;
     long long frame_count = 0;
