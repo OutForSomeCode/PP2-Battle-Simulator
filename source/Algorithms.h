@@ -63,21 +63,19 @@ class KD_node
 class KD_Tree
 {
   public:
-    KD_Tree();
+    KD_Tree(){};
+    KD_Tree(std::vector<Tank*>& input);
     ~KD_Tree()
     {
         delete root;
     };
-    KD_node* root;
+    static Tank* median(std::vector<Tank*>& input);
+    KD_node* insertTank(Tank* _tank);
+    Tank* findClosestTank(Tank* _tank);
 
-    Tank* KD_sort(std::vector<Tank*>& input);
-
-    KD_node* insertRec(KD_node* root, Tank* tank, unsigned depth);
-
-    KD_node* KD_insert_tank(KD_node* root, Tank* _tank);
-
-    Tank* searchRec(KD_node* root, Tank* _tank, unsigned depth);
-
-    Tank* KD_search_closest_tank(KD_node* root, Tank* _tank);
+  private:
+    static KD_node* insertRec(KD_node* root, Tank* tank, unsigned depth);
+    static Tank* searchRec(KD_node* root, Tank* _tank, unsigned depth);
+    KD_node* root = nullptr;
 };
 } // namespace PP2

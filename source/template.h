@@ -133,22 +133,6 @@ namespace PP2 {
 
         bool operator!=(const vec2 &operand) const { return x != operand.x || y != operand.y; }
 
-        // -----------------------------------------------------------------------
-        // needed in linked list
-        bool operator<(const vec2 &operand) const {
-            return std::sqrtf(std::powf(x, 2) + std::powf(y, 2)) < std::sqrtf(std::powf(operand.x, 2) + std::powf(operand.y, 2));
-        }
-        bool operator<=(const vec2 &operand) const {
-            return std::sqrtf(std::powf(x, 2) + std::powf(y, 2)) < std::sqrtf(std::powf(operand.x, 2) + std::powf(operand.y, 2)) || (x == operand.x && y == operand.y);
-        }
-        bool operator>(const vec2 &operand) const {
-            return std::sqrtf(std::powf(x, 2) + std::powf(y, 2)) > std::sqrtf(std::powf(operand.x, 2) + std::powf(operand.y, 2));
-        }
-        bool operator>=(const vec2 &operand) const {
-            return std::sqrtf(std::powf(x, 2) + std::powf(y, 2)) > std::sqrtf(std::powf(operand.x, 2) + std::powf(operand.y, 2)) || (x == operand.x && y == operand.y);
-        }
-        // -----------------------------------------------------------------------
-
         vec2 operator*(T operand) const { return vec2(x * operand, y * operand); }
 
         vec2 operator/(T operand) const { return vec2(x / operand, y / operand); }

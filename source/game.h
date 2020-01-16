@@ -72,6 +72,10 @@ private:
     std::vector<Explosion> explosions;
     std::vector<Particle_beam> particle_beams;
 
+    bool buildKDTree = true;
+    KD_Tree red_KD_Tree;
+    KD_Tree blue_KD_Tree;
+
     //Font *frame_count_font;
     long long frame_count = 0;
 
