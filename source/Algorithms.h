@@ -74,7 +74,7 @@ class KD_Tree
     Tank* findClosestTank(Tank* _tank);
 
   private:
-    KD_node* insertRec(KD_node* _root, Tank* tank, unsigned depth);
+    KD_node* insertRec(KD_node* currentNode, Tank* tank, unsigned depth);
     Tank* searchRec(KD_node* _root, Tank* _tank, unsigned depth);
     KD_node* root = nullptr;
     float min_distance = 0;

@@ -183,7 +183,6 @@ void Game::BuildKDTree()
 // -----------------------------------------------------------
 Tank& Game::FindClosestEnemy(Tank& current_tank)
 {
-    buildKDTree = true;
 #if PROFILE_PARALLEL == 1
     EASY_FUNCTION(profiler::colors::Purple);
 #endif
