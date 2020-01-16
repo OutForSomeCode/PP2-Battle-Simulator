@@ -69,8 +69,8 @@ class KD_Tree
     {
         delete root;
     };
-    static Tank* median(std::vector<Tank*>& input);
-    void insertTank(Tank* _tank);
+    static Tank* Median(std::vector<Tank*>& input);
+    void InsertTank(Tank* _tank);
     Tank* findClosestTank(Tank* _tank);
 
   private:

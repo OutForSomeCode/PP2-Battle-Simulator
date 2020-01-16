@@ -40,19 +40,19 @@ vector<LinkedList<int>> LinkedList<int>::Sort(vector<Tank*>& input, int n_bucket
 
 KD_Tree::KD_Tree(std::vector<Tank*>& input)
 {
-    Tank* kdkdf = median(input);
-    KD_Tree::insertTank(kdkdf);
+    Tank* _median = Median(input);
+    KD_Tree::InsertTank(_median);
     for (Tank* tank : input)
     {
-        if (tank != kdkdf and tank->active)
-            KD_Tree::insertTank(tank);
+        if (tank != _median && tank->active)
+            KD_Tree::InsertTank(tank);
     }
 }
 
 // -----------------------------------------------------------
 // Sort tanks by x(coordinates) value using bucket sort for even KD_tree distribution
 // -----------------------------------------------------------
-Tank* KD_Tree::median(vector<Tank*>& input)
+Tank* KD_Tree::Median(vector<Tank*>& input)
 {
     std::nth_element(input.begin(), input.begin() + 640, input.end(),
                      [&](Tank* a, Tank* b) {
@@ -85,9 +85,9 @@ KD_node* KD_Tree::insertRec(KD_node* _root, Tank* tank, unsigned depth)
 // Function to insert a new point with given _tank in
 // KD Tree and return new root. It mainly uses above recursive
 // function "insertRec()"
-void KD_Tree::insertTank(Tank* _tank)
+void KD_Tree::InsertTank(Tank* tank)
 {
-    root = insertRec(root, _tank, 0);
+    root = insertRec(root, tank, 0);
 }
 
 // Searches a Point represented by "_tank" in the K D tree.
@@ -97,7 +97,7 @@ Tank* KD_Tree::searchRec(KD_node* _root, Tank* _tank, unsigned depth)
     if (_root == nullptr || _root->tank == nullptr)
         return closest_Tank;
 
-    float sqrDist = fabsf((_tank->Get_Position() - _root->tank->Get_Position()).sqrLength());
+    float sqrDist = fabsf((tank->position - currentNode->tank->position).sqrLength());
     if (sqrDist < min_distance)
     {
         min_distance = sqrDist;
@@ -109,8 +109,8 @@ Tank* KD_Tree::searchRec(KD_node* _root, Tank* _tank, unsigned depth)
 
     // Current dimension is computed using current depth and total
     // Compare point with root with respect to cd (Current dimension)
-    if (depth % 2 == 0 ? _tank->Get_Position().x < _root->tank->Get_Position().x
-                       : _tank->Get_Position().y < _root->tank->Get_Position().y)
+    if (depth % 2 == 0 ? tank->position.x < currentNode->tank->position.x
+                       : tank->position.y < currentNode->tank->position.y)
     {
         if (_root->left != nullptr)
             return searchRec(_root->left, _tank, depth + 1);
@@ -128,11 +128,11 @@ Tank* KD_Tree::searchRec(KD_node* _root, Tank* _tank, unsigned depth)
 
 // Searches a Point in the K D tree. It mainly uses
 // searchRec()
-Tank* KD_Tree::findClosestTank(Tank* _tank)
+Tank* KD_Tree::findClosestTank(Tank* tank)
 {
     closest_Tank = root->tank;
     min_distance = numeric_limits<float>::infinity();
     // Pass current depth as 0
-    return searchRec(root, _tank, 0);
+    return searchRec(root, tank, 0, numeric_limits<float>::infinity());
 }
 }; // namespace PP2

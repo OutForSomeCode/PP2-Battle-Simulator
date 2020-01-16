@@ -71,7 +71,6 @@ class Game
     std::vector<Explosion> explosions;
     std::vector<Particle_beam> particle_beams;
 
-    bool buildKDTree = true;
     KD_Tree* red_KD_Tree;
     KD_Tree* blue_KD_Tree;
 
