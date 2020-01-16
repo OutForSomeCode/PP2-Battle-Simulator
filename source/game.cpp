@@ -165,12 +165,15 @@ Game::~Game()
 
 void Game::BuildKDTree()
 {
+#ifdef USING_EASY_PROFILER
+    EASY_BLOCK("BuildKDTree", profiler::colors::Black);
+#endif
     /*tbb::task_group KD_sort_group;
     KD_sort_group.run([&] {
-        red_KD_Tree = KD_Tree(redTanks);
+        red_KD_Tree = new KD_Tree(redTanks);
     });
     KD_sort_group.run([&] {
-        blue_KD_Tree = KD_Tree(blueTanks);
+        blue_KD_Tree = new KD_Tree(blueTanks);
     });
     KD_sort_group.wait();*/
 
@@ -189,6 +192,7 @@ Tank& Game::FindClosestEnemy(Tank& current_tank)
 #if PROFILE_PARALLEL == 1
     EASY_FUNCTION(profiler::colors::Purple);
 #endif
+
     float closest_distance = numeric_limits<float>::infinity();
     int closest_index = 0;
 
@@ -219,9 +223,10 @@ void Game::Update(float deltaTime)
 #ifdef USING_EASY_PROFILER
     EASY_FUNCTION(profiler::colors::Yellow);
 #endif
-
     if (frame_count % 200 == 0)
+    {
         BuildKDTree();
+    }
 
     //Update tanks
     UpdateTanks();
@@ -307,11 +312,11 @@ void Game::UpdateTanks()
 
                               //Shoot at closest target if reloaded
                               if (!tank.Rocket_Reloaded()) continue;
-
-                              Tank* target = tank.allignment == RED ? blue_KD_Tree->findClosestTank(&tank) : red_KD_Tree->findClosestTank(&tank); //FindClosestEnemy(tank);
+                              //Tank& target = FindClosestEnemy(tank);
                               scoped_lock lock(mtx);
+                              Tank* target = tank.allignment == RED ? blue_KD_Tree->findClosestTank(&tank) : red_KD_Tree->findClosestTank(&tank);
                               rockets.emplace_back(tank.position,
-                                                   (target->Get_Position() - tank.position).normalized() * 3,
+                                                   (target->position - tank.position).normalized() * 3,
                                                    rocket_radius,
                                                    tank.allignment,
                                                    ((tank.allignment == RED) ? rocket_red : rocket_blue));
@@ -596,7 +601,7 @@ void Game::Tick(float deltaTime)
     {
         SDL_UnlockTexture(tankthreads);
     }
-
+    g.wait();
     Draw();
 
     MeasurePerformance();
@@ -617,6 +622,5 @@ void Game::Tick(float deltaTime)
 
         SDL_DestroyTexture(text_texture);
         SDL_FreeSurface(text_surface);
-        g.wait();
     }
 }
