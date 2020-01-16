@@ -1,4 +1,5 @@
 #include "Algorithms.h"
+#include <cmath>
 
 using namespace std;
 
@@ -96,9 +97,9 @@ Tank* KD_Tree::searchRec(KD_node* currentNode, Tank* tank, unsigned depth)
         return closest_Tank;
 
     float sqrDist = fabsf((tank->position - currentNode->tank->position).sqrLength());
-    if (sqrDist < min_distance)
+    if (sqrDist < distance_Closest_Tank)
     {
-        min_distance = sqrDist;
+        distance_Closest_Tank = sqrDist;
         closest_Tank = currentNode->tank;
     }
 
@@ -129,8 +130,89 @@ Tank* KD_Tree::searchRec(KD_node* currentNode, Tank* tank, unsigned depth)
 Tank* KD_Tree::findClosestTank(Tank* tank)
 {
     closest_Tank = root->tank;
-    min_distance = numeric_limits<float>::infinity();
+    distance_Closest_Tank = numeric_limits<float>::infinity();
     // Pass current depth as 0
     return searchRec(root, tank, 0);
 }
+
+Tank* KD_Tree::findClosestTankV2(Tank* tank)
+{
+    closest_Tank = root->tank;
+    distance_Closest_Tank = numeric_limits<float>::infinity();
+    vec2<> hyperplane[] = {vec2<>(0, 1280), vec2<>(1280, 0)};
+    // Pass current depth as 0
+    return searchNN(root, tank, hyperplane, distance_Closest_Tank, nullptr, 0);
+}
+
+Tank* KD_Tree::searchNN(KD_node* currentNode, Tank* target, vec2<> hyperplane[], float distance, Tank* nearest, unsigned depth)
+{
+    if (currentNode == nullptr)
+        return nullptr;
+
+    unsigned axis = depth % 2;
+    vec2<> leftHyperplane[2], rightHyperplane[2] = {};
+    vec2<> closestHyperplane[2], furthestHyperplane[2] = {};
+    KD_node *closestNode = nullptr, *furthestNode = nullptr;
+
+    if (axis == 0)
+    {
+        leftHyperplane[0] = hyperplane[0];
+        leftHyperplane[1] = vec2<>(currentNode->tank->position[0], hyperplane[1][1]);
+        rightHyperplane[0] = vec2<>(currentNode->tank->position[0], hyperplane[0][1]);
+        rightHyperplane[1] = hyperplane[1];
+    }
+    if (axis == 1)
+    {
+        leftHyperplane[0] = vec2<>(hyperplane[0][0], currentNode->tank->position[1]);
+        leftHyperplane[1] = hyperplane[1];
+        rightHyperplane[0] = hyperplane[0];
+        rightHyperplane[1] = vec2<>(hyperplane[1][0], currentNode->tank->position[1]);
+    }
+    if (target->position[axis] <= currentNode->tank->position[axis])
+    {
+        closestNode = currentNode->left;
+        furthestNode = currentNode->right;
+        memcpy(closestHyperplane, leftHyperplane, sizeof(closestHyperplane));
+        memcpy(furthestHyperplane, rightHyperplane, sizeof(furthestHyperplane));
+    }
+    if (target->position[axis] > currentNode->tank->position[axis])
+    {
+        closestNode = currentNode->right;
+        furthestNode = currentNode->left;
+        memcpy(closestHyperplane, rightHyperplane, sizeof(closestHyperplane));
+        memcpy(furthestHyperplane, leftHyperplane, sizeof(furthestHyperplane));
+    }
+
+    float dist = pow((currentNode->tank->position[0] - target->position[0]) + (currentNode->tank->position[1] - target->position[1]), 2);
+    if (dist < distance)
+    {
+        nearest = currentNode->tank;
+        distance = dist;
+    }
+
+    searchNN(closestNode, target, closestHyperplane, distance, nearest, depth + 1);
+
+    if (distance < distance_Closest_Tank){
+        closest_Tank = nearest;
+        distance_Closest_Tank = distance;
+    }
+
+    float pointX = calculateCC(target->position[0],furthestHyperplane[0][0], furthestHyperplane[1][0]);
+    float pointY = calculateCC(target->position[1],furthestHyperplane[1][1], furthestHyperplane[0][1]);
+
+    dist = pow((pointX - target->position[0]), 2) + pow((pointY - target->position[1]), 2);
+
+    if (dist < distance_Closest_Tank)
+        searchNN(furthestNode, target, furthestHyperplane, distance, nearest, depth + 1);
+}
+float KD_Tree::calculateCC(float targetXY, float hyperplaneMinXY, float hyperplaneMaxXY)
+{
+    if (hyperplaneMinXY < targetXY && targetXY < hyperplaneMaxXY)
+        return targetXY;
+    else if (targetXY <= hyperplaneMinXY)
+        return hyperplaneMinXY;
+    else if (targetXY >= hyperplaneMaxXY)
+        return hyperplaneMaxXY;
+}
+
 }; // namespace PP2

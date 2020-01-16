@@ -71,13 +71,16 @@ class KD_Tree
     };
     static Tank* Median(std::vector<Tank*>& input);
     void InsertTank(Tank* _tank);
-    Tank* findClosestTank(Tank* _tank);
+    Tank* findClosestTank(Tank* tank);
+    Tank* findClosestTankV2(Tank* tank);
 
   private:
     KD_node* insertRec(KD_node* currentNode, Tank* tank, unsigned depth);
-    Tank* searchRec(KD_node* _root, Tank* _tank, unsigned depth);
+    Tank* searchRec(KD_node* currentNode, Tank* tank, unsigned depth);
+    Tank* searchNN(KD_node* currentNode, Tank* target, vec2<> hyperplane[], float distance, Tank* nearest, unsigned depth);
+    float calculateCC(float targetXY, float hyperplaneMinXY, float hyperplaneMaxXY);
     KD_node* root = nullptr;
-    float min_distance = 0;
+    float distance_Closest_Tank = 0;
     Tank* closest_Tank = nullptr;
 };
 } // namespace PP2

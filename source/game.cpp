@@ -313,7 +313,8 @@ void Game::UpdateTanks()
                               if (!tank.Rocket_Reloaded()) continue;
                               //Tank& target = FindClosestEnemy(tank);
                               scoped_lock lock(mtx);
-                              Tank* target = tank.allignment == RED ? blue_KD_Tree->findClosestTank(&tank) : red_KD_Tree->findClosestTank(&tank);
+                              Tank* target = tank.allignment == RED ? blue_KD_Tree->findClosestTankV2(&tank) : red_KD_Tree->findClosestTankV2(&tank);
+                              //Tank* target = tank.allignment == RED ? blue_KD_Tree->findClosestTank(&tank) : red_KD_Tree->findClosestTank(&tank);
                               rockets.emplace_back(tank.position,
                                                    (target->position - tank.position).normalized() * 3,
                                                    rocket_radius,
