@@ -2,8 +2,6 @@
 
 using namespace std;
 
-mutex dfdgfdgfdsgfsgfgs;
-
 namespace PP2
 {
 
@@ -64,22 +62,22 @@ Tank* KD_Tree::Median(vector<Tank*>& input)
 
 // Inserts a new node and returns root of modified tree
 // The parameter depth is used to decide axis of comparison
-KD_node* KD_Tree::insertRec(KD_node* _root, Tank* tank, unsigned depth)
+KD_node* KD_Tree::insertRec(KD_node* currentNode, Tank* tank, unsigned depth)
 {
     // Tree is empty?
-    if (_root == nullptr)
+    if (currentNode == nullptr)
         return new KD_node(tank);
 
     // Calculate current dimension of comparison
     // Compare the new point with root on current dimension 'cd'
     // and decide the left or right subtree
-    if (depth % 2 == 0 ? tank->position.x < _root->tank->position.x
-                       : tank->position.y < _root->tank->position.y)
-        _root->left = insertRec(_root->left, tank, depth + 1);
+    if (depth % 2 == 0 ? tank->position.x < currentNode->tank->position.x
+                       : tank->position.y < currentNode->tank->position.y)
+        currentNode->left = insertRec(currentNode->left, tank, depth + 1);
     else
-        _root->right = insertRec(_root->right, tank, depth + 1);
+        currentNode->right = insertRec(currentNode->right, tank, depth + 1);
 
-    return _root;
+    return currentNode;
 }
 
 // Function to insert a new point with given _tank in
@@ -92,16 +90,16 @@ void KD_Tree::InsertTank(Tank* tank)
 
 // Searches a Point represented by "_tank" in the K D tree.
 // The parameter depth is used to determine current axis.
-Tank* KD_Tree::searchRec(KD_node* _root, Tank* _tank, unsigned depth)
+Tank* KD_Tree::searchRec(KD_node* currentNode, Tank* tank, unsigned depth)
 {
-    if (_root == nullptr || _root->tank == nullptr)
+    if (currentNode == nullptr || currentNode->tank == nullptr)
         return closest_Tank;
 
     float sqrDist = fabsf((tank->position - currentNode->tank->position).sqrLength());
     if (sqrDist < min_distance)
     {
         min_distance = sqrDist;
-        closest_Tank = _root->tank;
+        closest_Tank = currentNode->tank;
     }
 
     //if (_root->left || _root->right)
@@ -112,15 +110,15 @@ Tank* KD_Tree::searchRec(KD_node* _root, Tank* _tank, unsigned depth)
     if (depth % 2 == 0 ? tank->position.x < currentNode->tank->position.x
                        : tank->position.y < currentNode->tank->position.y)
     {
-        if (_root->left != nullptr)
-            return searchRec(_root->left, _tank, depth + 1);
+        if (currentNode->left != nullptr)
+            return searchRec(currentNode->left, tank, depth + 1);
         else
             return closest_Tank;
     }
     else
     {
-        if (_root->right != nullptr)
-            return searchRec(_root->right, _tank, depth + 1);
+        if (currentNode->right != nullptr)
+            return searchRec(currentNode->right, tank, depth + 1);
         else
             return closest_Tank;
     }
@@ -133,6 +131,6 @@ Tank* KD_Tree::findClosestTank(Tank* tank)
     closest_Tank = root->tank;
     min_distance = numeric_limits<float>::infinity();
     // Pass current depth as 0
-    return searchRec(root, tank, 0, numeric_limits<float>::infinity());
+    return searchRec(root, tank, 0);
 }
 }; // namespace PP2
