@@ -53,12 +53,12 @@ KD_Tree::KD_Tree(std::vector<Tank*>& input)
 // -----------------------------------------------------------
 Tank* KD_Tree::Median(vector<Tank*>& input)
 {
-    std::nth_element(input.begin(), input.begin() + 640, input.end(),
+    std::nth_element(input.begin(), input.begin() + input.size() / 2, input.end(),
                      [&](Tank* a, Tank* b) {
                          return a->position.sqrLength() < b->position.sqrLength();
                      });
 
-    return input[640];
+    return input[input.size() / 2];
 }
 
 // Inserts a new node and returns root of modified tree
@@ -139,7 +139,7 @@ Tank* KD_Tree::findClosestTankV2(Tank* tank)
 {
     closest_Tank = root->tank;
     distance_Closest_Tank = numeric_limits<float>::infinity();
-    vec2<> hyperplane[] = {vec2<>(0, 1280), vec2<>(1280, 0)};
+    vec2<> hyperplane[] = {vec2<>(0, 720), vec2<>(1280, 0)};
     // Pass current depth as 0
     return searchNN(root, tank, hyperplane, distance_Closest_Tank, nullptr, 0);
 }
@@ -147,11 +147,11 @@ Tank* KD_Tree::findClosestTankV2(Tank* tank)
 Tank* KD_Tree::searchNN(KD_node* currentNode, Tank* target, vec2<> hyperplane[], float distance, Tank* nearest, unsigned depth)
 {
     if (currentNode == nullptr)
-        return nullptr;
+        return closest_Tank;
 
     unsigned axis = depth % 2;
-    vec2<> leftHyperplane[2], rightHyperplane[2] = {};
-    vec2<> closestHyperplane[2], furthestHyperplane[2] = {};
+    vec2<> leftHyperplane[2] = {}, rightHyperplane[2] = {};
+    vec2<> closestHyperplane[2] = {}, furthestHyperplane[2] = {};
     KD_node *closestNode = nullptr, *furthestNode = nullptr;
 
     if (axis == 0)
@@ -204,6 +204,8 @@ Tank* KD_Tree::searchNN(KD_node* currentNode, Tank* target, vec2<> hyperplane[],
 
     if (dist < distance_Closest_Tank)
         searchNN(furthestNode, target, furthestHyperplane, distance, nearest, depth + 1);
+
+    return closest_Tank;
 }
 float KD_Tree::calculateCC(float targetXY, float hyperplaneMinXY, float hyperplaneMaxXY)
 {
