@@ -183,32 +183,6 @@ void Game::BuildKDTree()
     //std::cout << "The Closest Tank is (" << t.x << " " << t.y << ")\n";
 }
 
-// -----------------------------------------------------------
-// Iterates through all tanks and returns the closest enemy tank for the given tank
-// -----------------------------------------------------------
-Tank& Game::FindClosestEnemy(Tank& current_tank)
-{
-#if PROFILE_PARALLEL == 1
-    EASY_FUNCTION(profiler::colors::Purple);
-#endif
-
-    float closest_distance = numeric_limits<float>::infinity();
-    int closest_index = 0;
-
-    for (int i = 0; i < tanks.size(); i++)
-    {
-        if (tanks.at(i).allignment != current_tank.allignment && tanks.at(i).active)
-        {
-            float sqrDist = fabsf((tanks.at(i).Get_Position() - current_tank.Get_Position()).sqrLength());
-            if (sqrDist < closest_distance)
-            {
-                closest_distance = sqrDist;
-                closest_index = i;
-            }
-        }
-    }
-    return tanks.at(closest_index);
-}
 
 // -----------------------------------------------------------
 // Update the game state:
@@ -311,8 +285,7 @@ void Game::UpdateTanks()
 
                               //Shoot at closest target if reloaded
                               if (!tank.Rocket_Reloaded()) continue;
-                              //Tank& target = FindClosestEnemy(tank);
-                              scoped_lock lock(mtx);
+                              scoped_lock lock2(mtx);
                               Tank* target = tank.allignment == RED ? blue_KD_Tree->findClosestTankV2(&tank) : red_KD_Tree->findClosestTankV2(&tank);
                               //Tank* target = tank.allignment == RED ? blue_KD_Tree->findClosestTank(&tank) : red_KD_Tree->findClosestTank(&tank);
                               rockets.emplace_back(tank.position,
