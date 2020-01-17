@@ -149,6 +149,11 @@ void Game::Init()
         else
             blueTanks.emplace_back(&tank);
     }
+
+
+    /*blue_KD_Tree = new KD_Tree(blueTanks);
+    blue_KD_Tree->printTree();*/
+
 }
 
 // -----------------------------------------------------------
@@ -168,17 +173,17 @@ void Game::BuildKDTree()
 #ifdef USING_EASY_PROFILER
     EASY_BLOCK("BuildKDTree", profiler::colors::Black);
 #endif
-    /*tbb::task_group KD_sort_group;
+    tbb::task_group KD_sort_group;
     KD_sort_group.run([&] {
         red_KD_Tree = new KD_Tree(redTanks);
     });
     KD_sort_group.run([&] {
         blue_KD_Tree = new KD_Tree(blueTanks);
     });
-    KD_sort_group.wait();*/
+    KD_sort_group.wait();
 
-    blue_KD_Tree = new KD_Tree(blueTanks);
-    red_KD_Tree = new KD_Tree(redTanks);
+    //blue_KD_Tree = new KD_Tree(blueTanks);
+    //red_KD_Tree = new KD_Tree(redTanks);
     // auto t = blue_KD_Tree.findClosestTank(blueTanks[5])->position;
     //std::cout << "The Closest Tank is (" << t.x << " " << t.y << ")\n";
 }
@@ -285,9 +290,9 @@ void Game::UpdateTanks()
 
                               //Shoot at closest target if reloaded
                               if (!tank.Rocket_Reloaded()) continue;
-                              scoped_lock lock2(mtx);
                               Tank* target = tank.allignment == RED ? blue_KD_Tree->findClosestTankV2(&tank) : red_KD_Tree->findClosestTankV2(&tank);
                               //Tank* target = tank.allignment == RED ? blue_KD_Tree->findClosestTank(&tank) : red_KD_Tree->findClosestTank(&tank);
+                              scoped_lock lock2(mtx);
                               rockets.emplace_back(tank.position,
                                                    (target->position - tank.position).normalized() * 3,
                                                    rocket_radius,

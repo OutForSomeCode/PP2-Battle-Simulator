@@ -50,11 +50,19 @@ class LinkedList
 class KD_node
 {
   public:
-    KD_node(Tank* tank) : tank(tank){};
+    KD_node(Tank* t) : tank(t){};
+    KD_node(Tank* t, KD_node* r, KD_node* l) : tank(t), right(r), left(l){};
     ~KD_node()
     {
         delete left;
         delete right;
+    };
+
+    std::string print()
+    {
+        char buff[50];
+        sprintf(buff, "(%g,%g)", tank->position.x, tank->position.y);
+        return buff;
     };
     Tank* tank = nullptr;
     KD_node* right = nullptr;
@@ -69,18 +77,26 @@ class KD_Tree
     {
         delete root;
     };
-    static Tank* Median(std::vector<Tank*>& input);
-    void InsertTank(Tank* _tank);
     Tank* findClosestTank(Tank* tank);
     Tank* findClosestTankV2(Tank* tank);
 
+    void printTree()
+    {
+        auto pFile = fopen("./TreeDebug.dot", "w");
+        bst_print_dot(root, pFile);
+        fclose(pFile);
+    };
+
   private:
-    KD_node* insertRec(KD_node* currentNode, Tank* tank, unsigned depth);
-    Tank* searchRec(KD_node* currentNode, Tank* tank, unsigned depth);
-    Tank* searchNN(KD_node* currentNode, Tank* target, vec2<> hyperplane[], float distance, Tank* nearest, unsigned depth);
+    KD_node* InsertTank(std::vector<Tank*>& input, unsigned depth);
     float calculateCC(float targetXY, float hyperplaneMinXY, float hyperplaneMaxXY);
     KD_node* root = nullptr;
-    float distance_Closest_Tank = 0;
-    Tank* closest_Tank = nullptr;
+    //float distance_Closest_Tank = 0;
+    //Tank* closest_Tank = nullptr;
+    void bst_print_dot(KD_node* tree, FILE* stream);
+    void bst_print_dot_aux(KD_node* node, FILE* stream);
+    void bst_print_dot_null(const std::string& key, int nullcount, FILE* stream);
+    Tank* searchNN(KD_node* currentNode, Tank* target, vec2<>* hyperplane, float distance, Tank* nearest, unsigned int depth, Tank* closest_Tank, float distance_Closest_Tank);
+    Tank* searchRec(KD_node* currentNode, Tank* tank, unsigned int depth, Tank* closest_Tank, float distance_Closest_Tank);
 };
 } // namespace PP2
