@@ -50,8 +50,7 @@ class LinkedList
 class KD_node
 {
   public:
-    KD_node(Tank* t) : tank(t){};
-    KD_node(Tank* t, KD_node* r, KD_node* l) : tank(t), right(r), left(l){};
+    KD_node(Tank* tank) : tank(tank){};
     ~KD_node()
     {
         delete left;
@@ -64,6 +63,7 @@ class KD_node
         sprintf(buff, "(%g,%g)", tank->position.x, tank->position.y);
         return buff;
     };
+
     Tank* tank = nullptr;
     KD_node* right = nullptr;
     KD_node* left = nullptr;
@@ -77,7 +77,6 @@ class KD_Tree
     {
         delete root;
     };
-    Tank* findClosestTank(Tank* tank);
     Tank* findClosestTankV2(Tank* tank);
 
     void printTree()
@@ -88,15 +87,13 @@ class KD_Tree
     };
 
   private:
-    KD_node* InsertTank(std::vector<Tank*>& input, unsigned depth);
-    float calculateCC(float targetXY, float hyperplaneMinXY, float hyperplaneMaxXY);
     KD_node* root = nullptr;
-    //float distance_Closest_Tank = 0;
-    //Tank* closest_Tank = nullptr;
+    KD_node* InsertTank(std::vector<Tank*> input, unsigned depth);
+    float calculateCC(float targetXY, float hyperplaneMinXY, float hyperplaneMaxXY);
+    Tank* searchNN(KD_node* currentNode, Tank* target, vec2<>* hyperplane, float distanceCurrentClosestTank, Tank* currentClosestTank, unsigned int depth, Tank* closestTank, float distanceClosestTank);
+
     void bst_print_dot(KD_node* tree, FILE* stream);
     void bst_print_dot_aux(KD_node* node, FILE* stream);
     void bst_print_dot_null(const std::string& key, int nullcount, FILE* stream);
-    Tank* searchNN(KD_node* currentNode, Tank* target, vec2<>* hyperplane, float distance, Tank* nearest, unsigned int depth, Tank* closest_Tank, float distance_Closest_Tank);
-    Tank* searchRec(KD_node* currentNode, Tank* tank, unsigned int depth, Tank* closest_Tank, float distance_Closest_Tank);
 };
 } // namespace PP2
