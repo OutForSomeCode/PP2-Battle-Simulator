@@ -149,11 +149,9 @@ void Game::Init()
         else
             blueTanks.emplace_back(&tank);
     }
-
-
-    /*blue_KD_Tree = new KD_Tree(blueTanks);
-    blue_KD_Tree->printTree();*/
-
+    
+//    blue_KD_Tree = new KD_Tree(blueTanks);
+//    blue_KD_Tree->printTree();
 }
 
 // -----------------------------------------------------------
@@ -181,11 +179,6 @@ void Game::BuildKDTree()
         blue_KD_Tree = new KD_Tree(blueTanks);
     });
     KD_sort_group.wait();
-
-    //blue_KD_Tree = new KD_Tree(blueTanks);
-    //red_KD_Tree = new KD_Tree(redTanks);
-    // auto t = blue_KD_Tree.findClosestTank(blueTanks[5])->position;
-    //std::cout << "The Closest Tank is (" << t.x << " " << t.y << ")\n";
 }
 
 
