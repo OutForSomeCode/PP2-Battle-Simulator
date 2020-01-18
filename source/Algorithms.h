@@ -37,7 +37,7 @@ class LinkedList
 
     ~LinkedList()
     {
-        if (head != nullptr) delete head;
+        delete head;
     }
 
     void InsertValue(T value);
@@ -88,12 +88,12 @@ class KD_Tree
 
   private:
     KD_node* root = nullptr;
-    KD_node* InsertTank(std::vector<Tank*> input, unsigned depth);
-    float calculateCC(float targetXY, float hyperplaneMinXY, float hyperplaneMaxXY);
-    Tank* searchNN(KD_node* currentNode, Tank* target, vec2<>* hyperplane, float distanceCurrentClosestTank, Tank* currentClosestTank, unsigned int depth, Tank* closestTank, float distanceClosestTank);
+    static KD_node* InsertTank(std::vector<Tank*> input, unsigned depth);
+    static float calculateCurrentClosest(float targetXY, float hyperplaneMinXY, float hyperplaneMaxXY);
+    static Tank* searchNN(KD_node* currentNode, Tank* target, vec2<>* hyperplane, float distanceCurrentClosestTank, Tank* currentClosestTank, unsigned int depth, Tank* closestTank, float distanceClosestTank);
 
-    void bst_print_dot(KD_node* tree, FILE* stream);
-    void bst_print_dot_aux(KD_node* node, FILE* stream);
-    void bst_print_dot_null(const std::string& key, int nullcount, FILE* stream);
+    static void bst_print_dot(KD_node* tree, FILE* stream);
+    static void bst_print_dot_aux(KD_node* node, FILE* stream);
+    static void bst_print_dot_null(const std::string& key, int nullCount, FILE* stream);
 };
 } // namespace PP2
