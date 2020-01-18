@@ -150,8 +150,8 @@ Tank* KD_Tree::searchNN(KD_node* currentNode, Tank* target, vec2<> hyperplane[],
         distanceClosestTank = distanceCurrentClosestTank;
     }
 
-    float pointX = calculateCC(target->position[0], furthestHyperplane[0][0], furthestHyperplane[1][0]);
-    float pointY = calculateCC(target->position[1], furthestHyperplane[1][1], furthestHyperplane[0][1]);
+    float pointX = calculateCurrentClosest(target->position[0], furthestHyperplane[0][0], furthestHyperplane[1][0]);
+    float pointY = calculateCurrentClosest(target->position[1], furthestHyperplane[1][1], furthestHyperplane[0][1]);
 
     dist = pow((pointX - target->position[0]), 2) + pow((pointY - target->position[1]), 2);
 
@@ -160,7 +160,7 @@ Tank* KD_Tree::searchNN(KD_node* currentNode, Tank* target, vec2<> hyperplane[],
 
     return closestTank;
 }
-float KD_Tree::calculateCC(float targetXY, float hyperplaneMinXY, float hyperplaneMaxXY)
+float KD_Tree::calculateCurrentClosest(float targetXY, float hyperplaneMinXY, float hyperplaneMaxXY)
 {
     if (hyperplaneMinXY < targetXY && targetXY < hyperplaneMaxXY)
         return targetXY;
@@ -170,15 +170,15 @@ float KD_Tree::calculateCC(float targetXY, float hyperplaneMinXY, float hyperpla
         return hyperplaneMaxXY;
 }
 
-void KD_Tree::bst_print_dot_null(const string& key, int nullcount, FILE* stream)
+void KD_Tree::bst_print_dot_null(const string& key, int nullCount, FILE* stream)
 {
-    fprintf(stream, "    null%d [shape=point];\n", nullcount);
-    fprintf(stream, "    \"%s\" -> null%d;\n", key.c_str(), nullcount);
+    fprintf(stream, "    null%d [shape=point];\n", nullCount);
+    fprintf(stream, "    \"%s\" -> null%d;\n", key.c_str(), nullCount);
 }
 
 void KD_Tree::bst_print_dot_aux(KD_node* node, FILE* stream)
 {
-    static int nullcount = 0;
+    static int nullCount = 0;
 
     if (node->left)
     {
@@ -186,7 +186,7 @@ void KD_Tree::bst_print_dot_aux(KD_node* node, FILE* stream)
         bst_print_dot_aux(node->left, stream);
     }
     else
-        bst_print_dot_null(node->print(), nullcount++, stream);
+        bst_print_dot_null(node->print(), nullCount++, stream);
 
     if (node->right)
     {
@@ -194,7 +194,7 @@ void KD_Tree::bst_print_dot_aux(KD_node* node, FILE* stream)
         bst_print_dot_aux(node->right, stream);
     }
     else
-        bst_print_dot_null(node->print(), nullcount++, stream);
+        bst_print_dot_null(node->print(), nullCount++, stream);
 }
 
 void KD_Tree::bst_print_dot(KD_node* tree, FILE* stream)
