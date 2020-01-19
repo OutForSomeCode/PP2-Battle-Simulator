@@ -88,7 +88,7 @@ class KD_Tree
 
   private:
     KD_node* root = nullptr;
-    static KD_node* InsertTank(std::vector<Tank*> input, unsigned depth);
+    static KD_node* BuildKDTree(std::vector<Tank*> input, unsigned depth);
     static float calculateCurrentClosest(float targetXY, float hyperplaneMinXY, float hyperplaneMaxXY);
     static Tank* searchNN(KD_node* currentNode, Tank* target, vec2<>* hyperplane, float distanceCurrentClosestTank, Tank* currentClosestTank, unsigned int depth, Tank* closestTank, float distanceClosestTank);
 

@@ -50,11 +50,11 @@ KD_Tree::KD_Tree(std::vector<Tank*>& input)
         if (tank->active)
             activeTanks.emplace_back(tank);
 
-    root = InsertTank(activeTanks, 0);
+    root = BuildKDTree(activeTanks, 0);
 }
 // Inserts list of tanks in the tree and return the root
 // The parameter depth is used to decide axis of comparison
-KD_node* KD_Tree::InsertTank(std::vector<Tank*> input, unsigned depth)
+KD_node* KD_Tree::BuildKDTree(std::vector<Tank*> input, unsigned depth)
 {
     // Tree is empty?
     if (input.size() == 1)
@@ -63,33 +63,35 @@ KD_node* KD_Tree::InsertTank(std::vector<Tank*> input, unsigned depth)
     if (input.empty())
         return nullptr;
 
-    unsigned median = input.size() / 2;
     unsigned axis = depth % 2;
 
     // Sort input based on current depth
     sort(input.begin(), input.end(), [axis](Tank* a, Tank* b) {
-        return a->position[axis] < b->position[axis];
+            return a->position[axis] < b->position[axis];
     });
 
-    Tank* tank = input[median];
-    input.erase(input.begin() + median);
+    Tank* tank = input[input.size() / 2];
+    input.erase(input.begin() + (input.size() / 2));
     vector<Tank*> left(input.begin(), input.begin() + (input.size() / 2));
     vector<Tank*> right(input.begin() + ((input.size() / 2) + 1), input.end());
 
-    KD_node* newTank = new KD_node(tank);
-    newTank->left = InsertTank(left, depth + 1);
-    newTank->right = InsertTank(right, depth + 1);
+    KD_node* root = new KD_node(tank);
+    root->left = BuildKDTree(left, depth + 1);
+    root->right = BuildKDTree(right, depth + 1);
 
-    return newTank;
+    return root;
 }
 
 // Searches the closest enemy tank in the K D tree.
 Tank* KD_Tree::findClosestTankV2(Tank* tank)
 {
+    // some tanks go outside the screen, that is why we add some margin.
+    float errorMargin = 250.f;
     Tank* closestTank = root->tank;
     float max = numeric_limits<float>::infinity();
-    vec2<> hyperplane[] = {vec2<>(0, 2000), vec2<>(2000, 0)};
-    // Pass current depth as 0
+    vec2<> hyperplane[] = {vec2<>(0 - errorMargin, 0 - errorMargin), vec2<>(1280 + errorMargin, 720 + errorMargin)};
+
+    // root is at depth of 0
     return searchNN(root, tank, hyperplane, max, nullptr, 0, closestTank, max);
 }
 
@@ -101,47 +103,53 @@ Tank* KD_Tree::searchNN(KD_node* currentNode, Tank* target, vec2<> hyperplane[],
     if (currentNode == nullptr)
         return closestTank;
 
+    // X[0], Y[1] axis
     unsigned axis = depth % 2;
-    vec2<> leftHyperplane[2] = {}, rightHyperplane[2] = {};
+    vec2<> leftOrTopHyperplane[2] = {}, rightOrBottomHyperplane[2] = {};
     vec2<> closestHyperplane[2] = {}, furthestHyperplane[2] = {};
     KD_node *closestNode = nullptr, *furthestNode = nullptr;
 
+    // X axis, divide vertical
     if (axis == 0)
     {
-        leftHyperplane[0] = hyperplane[0];
-        leftHyperplane[1] = vec2<>(currentNode->tank->position[0], hyperplane[1][1]);
-        rightHyperplane[0] = vec2<>(currentNode->tank->position[0], hyperplane[0][1]);
-        rightHyperplane[1] = hyperplane[1];
+        leftOrTopHyperplane[0] = hyperplane[0];
+        leftOrTopHyperplane[1] = vec2<>(currentNode->tank->position[0], hyperplane[1][1]);
+        rightOrBottomHyperplane[0] = vec2<>(currentNode->tank->position[0], hyperplane[0][1]);
+        rightOrBottomHyperplane[1] = hyperplane[1];
     }
+    // Y axis, divide horizontal
     if (axis == 1)
     {
-        leftHyperplane[0] = vec2<>(hyperplane[0][0], currentNode->tank->position[1]);
-        leftHyperplane[1] = hyperplane[1];
-        rightHyperplane[0] = hyperplane[0];
-        rightHyperplane[1] = vec2<>(hyperplane[1][0], currentNode->tank->position[1]);
+        leftOrTopHyperplane[0] = hyperplane[0];
+        leftOrTopHyperplane[1] = vec2<>(hyperplane[1][0], currentNode->tank->position[1]);
+        rightOrBottomHyperplane[0] = vec2<>(hyperplane[0][0], currentNode->tank->position[1]);
+        rightOrBottomHyperplane[1] = hyperplane[1];
     }
+    // check which hyperplane the target(tank that's firing) belongs to
     if (target->position[axis] <= currentNode->tank->position[axis])
     {
         closestNode = currentNode->left;
         furthestNode = currentNode->right;
-        memcpy(closestHyperplane, leftHyperplane, sizeof(closestHyperplane));
-        memcpy(furthestHyperplane, rightHyperplane, sizeof(furthestHyperplane));
+        memcpy(closestHyperplane, leftOrTopHyperplane, sizeof(closestHyperplane));
+        memcpy(furthestHyperplane, rightOrBottomHyperplane, sizeof(furthestHyperplane));
     }
     if (target->position[axis] > currentNode->tank->position[axis])
     {
         closestNode = currentNode->right;
         furthestNode = currentNode->left;
-        memcpy(closestHyperplane, rightHyperplane, sizeof(closestHyperplane));
-        memcpy(furthestHyperplane, leftHyperplane, sizeof(furthestHyperplane));
+        memcpy(closestHyperplane, rightOrBottomHyperplane, sizeof(closestHyperplane));
+        memcpy(furthestHyperplane, leftOrTopHyperplane, sizeof(furthestHyperplane));
     }
 
-    float dist = pow((currentNode->tank->position[0] - target->position[0]) + (currentNode->tank->position[1] - target->position[1]), 2);
+    // check if the current node is closer to the target
+    float dist = pow(currentNode->tank->position[0] - target->position[0], 2) + pow(currentNode->tank->position[1] - target->position[1], 2);
     if (dist < distanceCurrentClosestTank)
     {
         currentClosestTank = currentNode->tank;
         distanceCurrentClosestTank = dist;
     }
 
+    // go deeper into the tree
     searchNN(closestNode, target, closestHyperplane, distanceCurrentClosestTank, currentClosestTank, depth + 1, closestTank, distanceClosestTank);
 
     if (distanceCurrentClosestTank < distanceClosestTank)
