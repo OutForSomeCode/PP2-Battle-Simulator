@@ -151,7 +151,7 @@ Tank* KD_Tree::searchNN(KD_node* currentNode, Tank* target, vec2<> hyperplane[],
     // go deeper into the tree
     Tank* closestTank = searchNN(closestNode, target, closestHyperplane, distanceCurrentClosestTank, currentClosestTank, depth + 1);
 
-    float distanceClosestTank;
+    float distanceClosestTank = 0;
     dist = pow(closestTank->position[0] - target->position[0], 2) + pow(closestTank->position[1] - target->position[1], 2);
     if (distanceCurrentClosestTank < dist)
     {
@@ -165,8 +165,7 @@ Tank* KD_Tree::searchNN(KD_node* currentNode, Tank* target, vec2<> hyperplane[],
     dist = pow((pointX - target->position[0]), 2) + pow((pointY - target->position[1]), 2);
 
     if (dist < distanceClosestTank)
-        searchNN(furthestNode, target, furthestHyperplane, distanceCurrentClosestTank, currentClosestTank, depth + 1);
-
+        closestTank = searchNN(furthestNode, target, furthestHyperplane, distanceCurrentClosestTank, currentClosestTank, depth + 1);
     return closestTank;
 }
 float KD_Tree::calculateCurrentClosest(float targetXY, float hyperplaneMinXY, float hyperplaneMaxXY)

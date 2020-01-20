@@ -78,7 +78,6 @@ SDL_Rect end_message_rectl2 = {500, 300, 300, 60};
 SDL_Texture* end_message_texturel1;
 SDL_Texture* end_message_texturel2;
 
-
 // -----------------------------------------------------------
 // Initialize the application
 // -----------------------------------------------------------
@@ -88,7 +87,7 @@ void Game::Init()
     auto instance = Grid::Instance();
 
     tankthreads = SDL_CreateTexture(screen, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, SCRWIDTH, SCRHEIGHT);
-    
+
     tank_red = LOAD_TEX(tank_red_img);
     tank_blue = LOAD_TEX(tank_blue_img);
     rocket_red = LOAD_TEX(rocket_red_img);
@@ -149,9 +148,9 @@ void Game::Init()
         else
             blueTanks.emplace_back(&tank);
     }
-    
-//    blue_KD_Tree = new KD_Tree(blueTanks);
-//    blue_KD_Tree->printTree();
+
+    //    blue_KD_Tree = new KD_Tree(blueTanks);
+    //    blue_KD_Tree->printTree();
 }
 
 // -----------------------------------------------------------
@@ -180,7 +179,6 @@ void Game::BuildKDTree()
     });
     KD_sort_group.wait();
 }
-
 
 // -----------------------------------------------------------
 // Update the game state:
