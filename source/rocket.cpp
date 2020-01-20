@@ -12,7 +12,7 @@ Rocket::Rocket(vec2<> position, vec2<> direction, float collision_radius, allign
     DestR = {0, 0, R_SIZE, R_SIZE};
 }
 
-Rocket::~Rocket() {}
+Rocket::~Rocket() = default;
 
 void Rocket::Tick()
 {
@@ -41,7 +41,7 @@ void Rocket::Draw(SDL_Renderer* screen)
 }
 
 //Does the given circle collide with this rockets collision circle?
-bool Rocket::Intersects(vec2<> position_other, float radius_other) const
+bool Rocket::Intersects(const vec2<>& position_other, float radius_other) const
 {
     //Uses squared lengths to remove expensive square roots
     float distance_sqr = (position_other - position).sqrLength();

@@ -468,7 +468,7 @@ void Game::Draw()
         }
     }
 
-    if (drawPoints.size() > 0) SDL_RenderDrawLines(screen, &drawPoints[0], drawPoints.size());
+    if (!drawPoints.empty()) SDL_RenderDrawLines(screen, &drawPoints[0], drawPoints.size());
     drawPoints.clear();
 
 #ifdef USING_EASY_PROFILER
@@ -487,7 +487,7 @@ void Game::Draw()
             countBlue++;
         }
     }
-    if (drawPoints.size() > 0) SDL_RenderDrawLines(screen, &drawPoints[0], drawPoints.size());
+    if (!drawPoints.empty()) SDL_RenderDrawLines(screen, &drawPoints[0], drawPoints.size());
     drawPoints.clear();
 #ifdef USING_EASY_PROFILER
     EASY_END_BLOCK

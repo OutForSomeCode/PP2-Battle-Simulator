@@ -31,7 +31,7 @@ class Tank
 
     int CompareHealth(const Tank& other) const;
 
-    void Push(vec2<float> direction, float magnitude);
+    void Push(const vec2<float>& direction, float magnitude);
 
     vec2<float> position;
     vec2<int> gridCell;

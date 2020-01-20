@@ -16,7 +16,7 @@ class Rocket
 
     void Draw(SDL_Renderer* screen);
 
-    bool Intersects(vec2<> position_other, float radius_other) const;
+    bool Intersects(const vec2<>& position_other, float radius_other) const;
 
     vec2<> position;
     vec2<> speed;

@@ -39,7 +39,7 @@ Tank::Tank(
     DestR = {0, 0, T_SIZE_X, T_SIZE_Y};
 }
 
-Tank::~Tank() {}
+Tank::~Tank() = default;
 
 void Tank::Tick()
 {
@@ -113,5 +113,5 @@ int Tank::CompareHealth(const Tank& other) const
 }
 
 //Add some force in a given direction
-void Tank::Push(vec2<> direction, float magnitude) { force += direction * magnitude; }
+void Tank::Push(const vec2<>& direction, float magnitude) { force += direction * magnitude; }
 } // namespace PP2
