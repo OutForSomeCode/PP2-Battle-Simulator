@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Algorithms.h"
 #include "Grid.h"
 #include "defines.h"
 #include "explosion.h"
@@ -12,61 +13,9 @@
 
 namespace PP2
 {
-class Node
-{
-public:
-
-    Node()
-        : value(0), next(nullptr) {}
-
-    Node(int value)
-        : value(value), next(nullptr) {}
-
-    int value;
-    Node* next;
-};
-
-class LinkedList
-{
-public:
-    LinkedList()
-        : head(nullptr) {}
-
-    void InsertValue(int value)
-    {
-        Node* new_node = new Node(value);
-
-        if (head == nullptr || value <= head->value)
-        {
-            new_node->next = head;
-            head = new_node;
-            return;
-        }
-
-        Node* current = head;
-        while (current->next != nullptr && value >= current->next->value) { current = current->next; }
-
-        //Add node
-        new_node->next = current->next;
-        current->next = new_node;
-    }
-
-    void PrintList()
-    {
-        Node* current = head;
-        while (current != nullptr)
-        {
-            std::cout << current->value << ", ";
-            current = current->next;
-        }
-    }
-
-    Node* head;
-};
-
 class Game
 {
-public:
+  public:
     void SetTarget(SDL_Renderer* surface) { screen = surface; }
 
     void Init();
@@ -81,9 +30,9 @@ public:
 
     void MeasurePerformance();
 
-    Tank& FindClosestEnemy(Tank& current_tank);
+    void BuildKDTree();
 
-    std::vector<LinkedList> Sort(std::vector<Tank*>& input, int n_buckets);
+    Tank& FindClosestEnemy(Tank& current_tank);
 
     void DrawTankHP(int i, char color, int health);
 
@@ -112,7 +61,7 @@ public:
         /* implement if you want to handle keys */
     }
 
-private:
+  private:
     SDL_Renderer* screen;
     std::vector<Tank> tanks;
     std::vector<Tank*> blueTanks;
@@ -121,6 +70,9 @@ private:
     std::vector<Smoke> smokes;
     std::vector<Explosion> explosions;
     std::vector<Particle_beam> particle_beams;
+
+    KD_Tree* red_KD_Tree;
+    KD_Tree* blue_KD_Tree;
 
     //Font *frame_count_font;
     long long frame_count = 0;

@@ -160,11 +160,12 @@ int main(int argc, char** argv)
 #else
     window = SDL_CreateWindow(TEMPLATE_VERSION, 100, 100, SCRWIDTH, SCRHEIGHT, SDL_WINDOW_SHOWN);
 #endif
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED /* | SDL_RENDERER_PRESENTVSYNC*/);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED  /*| SDL_RENDERER_PRESENTVSYNC*/);
 
     int exitapp = 0;
     game = new Game();
     game->SetTarget(renderer);
+    game->Init();
     timer t;
     t.reset();
     while (!exitapp)
@@ -172,11 +173,6 @@ int main(int argc, char** argv)
 #ifdef USING_EASY_PROFILER
         EASY_FUNCTION(profiler::colors::Orange);
 #endif
-        if (firstframe)
-        {
-            game->Init();
-            firstframe = false;
-        }
         // calculate frame time and pass it to game->Tick
         game->Tick(t.elapsed());
         t.reset();
