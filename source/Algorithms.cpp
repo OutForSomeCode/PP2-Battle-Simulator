@@ -170,12 +170,12 @@ Tank* KD_Tree::searchNN(KD_node* currentNode, Tank* target, vec2<> hyperplane[],
 }
 float KD_Tree::calculateCurrentClosest(float targetXY, float hyperplaneMinXY, float hyperplaneMaxXY)
 {
-    if (hyperplaneMinXY < targetXY && targetXY < hyperplaneMaxXY)
-        return targetXY;
-    else if (targetXY <= hyperplaneMinXY)
+    if (targetXY <= hyperplaneMinXY)
         return hyperplaneMinXY;
     else if (targetXY >= hyperplaneMaxXY)
         return hyperplaneMaxXY;
+
+    return targetXY;
 }
 
 void KD_Tree::bst_print_dot_null(const string& key, int nullCount, FILE* stream)

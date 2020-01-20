@@ -42,14 +42,14 @@ static SDL_Surface* particle_beam_img = SDL_LoadBMP("assets/Particle_Beam.bmp");
 static SDL_Surface* smoke_img = SDL_LoadBMP("assets/Smoke.bmp");
 static SDL_Surface* explosion_img = SDL_LoadBMP("assets/Explosion.bmp");
 
-TTF_Font* FPS;
-TTF_Font* End;
+TTF_Font* frameCountFont;
+TTF_Font* endScreenFont;
 static SDL_Color White = {255, 255, 255};
-static SDL_Rect framecounter_message_rect = {5, 5, 100, 50}; //create a rect
+static SDL_Rect frameCounter_message_rect = {5, 5, 100, 50}; //create a rect
 SDL_Surface* text_surface;
 SDL_Texture* text_texture;
 
-SDL_Texture* tankthreads;
+SDL_Texture* tankThreads;
 SDL_Texture* tank_red;
 SDL_Texture* tank_blue;
 SDL_Texture* rocket_red;
@@ -70,7 +70,7 @@ vector<SDL_Point> drawPoints = {};
 
 #define LOAD_TEX(_FIELD_) SDL_CreateTextureFromSurface(screen, _FIELD_);
 
-mutex mtx;
+mutex tankVectorMutex;
 
 SDL_Rect end_message_rectl1 = {500, 210, 300, 60};
 SDL_Rect end_message_rectl2 = {500, 300, 300, 60};
@@ -86,7 +86,7 @@ void Game::Init()
     //initiate grid to allocate memory
     auto instance = Grid::Instance();
 
-    tankthreads = SDL_CreateTexture(screen, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, SCRWIDTH, SCRHEIGHT);
+    tankThreads = SDL_CreateTexture(screen, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, SCRWIDTH, SCRHEIGHT);
 
     tank_red = LOAD_TEX(tank_red_img);
     tank_blue = LOAD_TEX(tank_blue_img);
@@ -96,15 +96,15 @@ void Game::Init()
     explosion = LOAD_TEX(explosion_img);
     particle_beam_sprite = LOAD_TEX(particle_beam_img);
 
-    FPS = TTF_OpenFont("assets/digital-7.ttf", 64);  //this opens a font style and sets a size
-    End = TTF_OpenFont("assets/digital-7.ttf", 256); //this opens a font style and sets a size
+    frameCountFont = TTF_OpenFont("assets/digital-7.ttf", 64);  //this opens a font style and sets a size
+    endScreenFont = TTF_OpenFont("assets/digital-7.ttf", 256); //this opens a font style and sets a size
 
     Uint32* pixels = nullptr;
     int pitch = 0;
     // Now let's make our "pixels" pointer point to the texture data.
-    SDL_LockTexture(tankthreads, nullptr, (void**)&pixels, &pitch);
+    SDL_LockTexture(tankThreads, nullptr, (void**)&pixels, &pitch);
     memcpy(pixels, background_img->pixels, SCRWIDTH * SCRHEIGHT * 4);
-    SDL_UnlockTexture(tankthreads);
+    SDL_UnlockTexture(tankThreads);
 
     tanks.reserve(NUM_TANKS_BLUE + NUM_TANKS_RED);
     blueTanks.reserve(NUM_TANKS_BLUE);
@@ -211,7 +211,7 @@ void Game::Update(float deltaTime)
 
     //Remove when done with remove erase idiom
     explosions.erase(std::remove_if(explosions.begin(), explosions.end(),
-                                    [](const Explosion& explosion) { return explosion.done(); }),
+                                    [](const Explosion& eExplosion) { return eExplosion.done(); }),
                      explosions.end());
 
     //Update rockets
@@ -283,7 +283,7 @@ void Game::UpdateTanks()
                               if (!tank.Rocket_Reloaded()) continue;
                               Tank* target = tank.allignment == RED ? blue_KD_Tree->findClosestTankV2(&tank) : red_KD_Tree->findClosestTankV2(&tank);
                               //Tank* target = tank.allignment == RED ? blue_KD_Tree->findClosestTank(&tank) : red_KD_Tree->findClosestTank(&tank);
-                              scoped_lock lock2(mtx);
+                              scoped_lock lock2(tankVectorMutex);
                               rockets.emplace_back(tank.position,
                                                    (target->position - tank.position).normalized() * 3,
                                                    rocket_radius,
@@ -333,7 +333,7 @@ void Game::UpdateRockets()
                                       if (tank->active && (tank->allignment != uRocket.allignment) &&
                                           uRocket.Intersects(tank->position, tank->collision_radius))
                                       {
-                                          scoped_lock lock(mtx);
+                                          scoped_lock lock(tankVectorMutex);
                                           explosions.emplace_back(explosion, tank->position);
 
                                           if (tank->hit(ROCKET_HIT_VALUE))
@@ -369,9 +369,9 @@ void Game::UpdateExplosions()
 #ifdef USING_EASY_PROFILER
     EASY_FUNCTION(profiler::colors::Yellow);
 #endif
-    for (Explosion& explosion : explosions)
+    for (Explosion& uExplosion : explosions)
     {
-        explosion.Tick();
+        uExplosion.Tick();
     }
 }
 
@@ -394,7 +394,7 @@ void Game::Draw()
 
     //Draw background
     //SDL_RenderCopy(screen, background, NULL, NULL);
-    SDL_RenderCopy(screen, tankthreads, NULL, NULL);
+    SDL_RenderCopy(screen, tankThreads, NULL, NULL);
 
 #ifdef USING_EASY_PROFILER
     EASY_BLOCK("Draw tanks", profiler::colors::Red);
@@ -402,7 +402,7 @@ void Game::Draw()
     Uint32* pixels = nullptr;
     int pitch = 0;
     // Now let's make our "pixels" pointer point to the texture data.
-    SDL_LockTexture(tankthreads, nullptr, (void**)&pixels, &pitch);
+    SDL_LockTexture(tankThreads, nullptr, (void**)&pixels, &pitch);
 
     try
     {
@@ -527,11 +527,11 @@ void PP2::Game::MeasurePerformance()
 
             int ms = (int)duration % 1000, sec = ((int)duration / 1000) % 60, min = ((int)duration / 60000);
             sprintf(buffer, " %02i:%02i:%03i ", min, sec, ms);
-            text_surface = TTF_RenderText_Solid(End, buffer, White);
+            text_surface = TTF_RenderText_Solid(endScreenFont, buffer, White);
             end_message_texturel1 = SDL_CreateTextureFromSurface(screen, text_surface);
 
             sprintf(buffer, "SPEEDUP: %4.1f", REF_PERFORMANCE / duration);
-            text_surface = TTF_RenderText_Solid(End, buffer, White);
+            text_surface = TTF_RenderText_Solid(endScreenFont, buffer, White);
             end_message_texturel2 = SDL_CreateTextureFromSurface(screen, text_surface);
 
             SDL_FreeSurface(text_surface);
@@ -562,13 +562,13 @@ void Game::Tick(float deltaTime)
 #ifdef USING_EASY_PROFILER
             EASY_BLOCK("SDL_UnlockTexture", profiler::colors::Orange);
 #endif
-            SDL_UnlockTexture(tankthreads);
+            SDL_UnlockTexture(tankThreads);
         });
         Update(deltaTime);
     }
     else
     {
-        SDL_UnlockTexture(tankthreads);
+        SDL_UnlockTexture(tankThreads);
     }
     g.wait();
     Draw();
@@ -584,10 +584,10 @@ void Game::Tick(float deltaTime)
         frame_count++;
         char buffer[6];
         sprintf(buffer, "%lld", frame_count);
-        text_surface = TTF_RenderText_Solid(FPS, buffer, White);
+        text_surface = TTF_RenderText_Solid(frameCountFont, buffer, White);
         text_texture = SDL_CreateTextureFromSurface(screen, text_surface);
 
-        SDL_RenderCopy(screen, text_texture, NULL, &framecounter_message_rect);
+        SDL_RenderCopy(screen, text_texture, NULL, &frameCounter_message_rect);
 
         SDL_DestroyTexture(text_texture);
         SDL_FreeSurface(text_surface);
