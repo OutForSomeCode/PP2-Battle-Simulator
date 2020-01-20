@@ -64,7 +64,7 @@ const static vec2<> rocket_size(25, 24);
 const static float tank_radius = 12.f;
 const static float rocket_radius = 10.f;
 
-vector<LinkedList<int>> redHealthBars(50); // = {};
+vector<LinkedList<int>> redHealthBars = {};
 vector<LinkedList<int>> blueHealthBars = {};
 vector<SDL_Point> drawPoints = {};
 

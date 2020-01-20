@@ -32,8 +32,6 @@ class Game
 
     void BuildKDTree();
 
-    Tank& FindClosestEnemy(Tank& current_tank);
-
     void DrawTankHP(int i, char color, int health);
 
     void MouseUp(int button)
