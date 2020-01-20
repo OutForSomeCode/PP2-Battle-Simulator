@@ -160,7 +160,7 @@ int main(int argc, char** argv)
 #else
     window = SDL_CreateWindow(TEMPLATE_VERSION, 100, 100, SCRWIDTH, SCRHEIGHT, SDL_WINDOW_SHOWN);
 #endif
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED /* | SDL_RENDERER_PRESENTVSYNC*/);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED  /*| SDL_RENDERER_PRESENTVSYNC*/);
 
     int exitapp = 0;
     game = new Game();
