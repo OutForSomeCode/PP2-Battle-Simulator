@@ -32,7 +32,7 @@ class Game
 
     void BuildKDTree();
 
-    void DrawTankHP(int i, char color, int health);
+    void DrawTankHP(int i, alliances al, int health);
 
     void MouseUp(int button)
     {

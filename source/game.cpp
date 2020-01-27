@@ -450,7 +450,7 @@ void Game::Draw()
         Node<int>* currentRedTank = bucket.head;
         while (currentRedTank != nullptr)
         {
-            DrawTankHP(countRed, 'r', currentRedTank->value);
+            DrawTankHP(countRed, RED, currentRedTank->value);
             currentRedTank = currentRedTank->next;
             countRed++;
         }
@@ -470,7 +470,7 @@ void Game::Draw()
         Node<int>* currentBlueTank = bucket.head;
         while (currentBlueTank != nullptr)
         {
-            DrawTankHP(countBlue, 'b', currentBlueTank->value);
+            DrawTankHP(countBlue, BLUE, currentBlueTank->value);
             currentBlueTank = currentBlueTank->next;
             countBlue++;
         }
@@ -482,14 +482,14 @@ void Game::Draw()
 #endif
 }
 
-void Game::DrawTankHP(int i, char color, int health)
+void Game::DrawTankHP(int i, alliances al, int health)
 {
     if (health == TANK_MAX_HEALTH) return;
 
     int health_bar_start_x = i * (HEALTH_BAR_WIDTH + HEALTH_BAR_SPACING) + HEALTH_BARS_OFFSET_X;
-    int health_bar_start_y = (color == 'b') ? 0 : (SCRHEIGHT - HEALTH_BAR_HEIGHT) - 1;
+    int health_bar_start_y = (al == BLUE) ? 0 : (SCRHEIGHT - HEALTH_BAR_HEIGHT) - 1;
     int health_bar_end_x = health_bar_start_x + HEALTH_BAR_WIDTH;
-    int health_bar_end_y = (color == 'b') ? 0 : (SCRHEIGHT - HEALTH_BAR_HEIGHT) - 1;
+    int health_bar_end_y = (al == BLUE) ? 0 : (SCRHEIGHT - HEALTH_BAR_HEIGHT) - 1;
 
     drawPoints.emplace_back(SDL_Point{health_bar_start_x, health_bar_start_y});
     drawPoints.emplace_back(
