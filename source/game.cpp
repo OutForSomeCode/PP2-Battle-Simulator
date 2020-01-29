@@ -324,7 +324,7 @@ void Game::UpdateRockets()
                               }
 
                               //Check if rocket collides with enemy tank, spawn explosion and if tank is destroyed spawn a smoke plume
-                              for (auto cell : Grid::Instance()->GetNeighbouringCells())
+                              for (const auto& cell : Grid::GetNeighbouringCells())
                               {
                                   vec2<int> rocketGridCell = Grid::GetGridCell(uRocket.position);
                                   int x = rocketGridCell.x + cell.x;
