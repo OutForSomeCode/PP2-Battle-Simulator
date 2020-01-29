@@ -70,14 +70,15 @@ mutex tankVectorMutex;
 typedef unsigned int Pixel; // unsigned int is assumed to be 32-bit, which seems a safe assumption.
 
 // subtractive blending
-Pixel SubBlend(Pixel a_Color1, Pixel a_Color2) {
+Pixel SubBlend(Pixel a_Color1, Pixel a_Color2)
+{
     int red = (a_Color1 & REDMASK) - (a_Color2 & REDMASK);
     int green = (a_Color1 & GREENMASK) - (a_Color2 & GREENMASK);
     int blue = (a_Color1 & BLUEMASK) - (a_Color2 & BLUEMASK);
     if (red < 0) red = 0;
     if (green < 0) green = 0;
     if (blue < 0) blue = 0;
-    return (Pixel) (red + green + blue);
+    return (Pixel)(red + green + blue);
 }
 
 // -----------------------------------------------------------
@@ -269,7 +270,7 @@ void Game::UpdateTanks()
                                           (tank.Get_collision_radius() * tank.Get_collision_radius()) +
                                           (oTank->Get_collision_radius() * oTank->Get_collision_radius());
 
-                                      if (dir.sqrLength() < colSquaredLen) { tank.Push(dir.normalized(), 1.f); }
+                                      if (dir.sqrLength() < colSquaredLen) tank.Push(dir.normalized(), 1.f);
                                   }
                               }
 
@@ -403,7 +404,7 @@ void Game::Draw()
 #ifdef USING_EASY_PROFILER
     EASY_BLOCK("Draw tanks", profiler::colors::Red);
 #endif
-    Uint32* pixels = nullptr;
+    Pixel* pixels = nullptr;
     int pitch = 0;
     // Now let's make our "pixels" pointer point to the texture data.
     SDL_LockTexture(tankThreads, nullptr, (void**)&pixels, &pitch);
@@ -411,7 +412,7 @@ void Game::Draw()
     try
     {
         //Draw sprites
-        for (int i = 0; i < NUM_TANKS_BLUE + NUM_TANKS_RED; i++)
+        for (int i = 0; i < MAX_TANKS; i++)
         {
             tanks.at(i).Draw(screen);
 
